@@ -587,8 +587,8 @@ brightbean-chat/
 | [`docs/security-audit.md`](docs/security-audit.md) | Security-baseline traceability and open gaps |
 | [`docs/pentest-runbook.md`](docs/pentest-runbook.md) | Probing and verifying a self-hosted instance |
 | [`tests/acceptance/README.md`](tests/acceptance/README.md) | SPEC §21 acceptance criteria and manual runbooks |
-| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Local development, frontend conventions, tenant scoping, and review checks |
-| [`SECURITY.md`](SECURITY.md) | How to report a vulnerability |
+| [`CONTRIBUTING.md`](.github/CONTRIBUTING.md) | Local development, frontend conventions, tenant scoping, and review checks |
+| [`SECURITY.md`](.github/SECURITY.md) | How to report a vulnerability |
 
 ## Running checks
 
@@ -612,7 +612,7 @@ checks, dependency audits, and deployment-focused validation.
 
 ## Contributing
 
-Start with [`CONTRIBUTING.md`](CONTRIBUTING.md). The project specification and
+Start with [`CONTRIBUTING.md`](.github/CONTRIBUTING.md). The project specification and
 security baseline are part of the development workflow, not background reading.
 New endpoints must be tenant-scoped, new URLs must follow the project routing
 conventions, and security-sensitive behavior needs a regression test.
@@ -620,7 +620,7 @@ conventions, and security-sensitive behavior needs a regression test.
 ## Security
 
 Please do not report vulnerabilities through public issues. Follow the process
-in [`SECURITY.md`](SECURITY.md), which explains the supported versions, scope,
+in [`SECURITY.md`](.github/SECURITY.md), which explains the supported versions, scope,
 safe-harbor terms, and what to include in a report.
 
 ## License

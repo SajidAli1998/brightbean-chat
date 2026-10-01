@@ -807,7 +807,7 @@ job and CI enforces the automatable ones. These are yours:
       a database problem, which is the failure you want to hear about first.
 
 Found a vulnerability in the software rather than in a deployment? See
-[`SECURITY.md`](../SECURITY.md).
+[`SECURITY.md`](../.github/SECURITY.md).
 
 ---
 

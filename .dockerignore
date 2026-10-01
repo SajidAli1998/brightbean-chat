@@ -44,7 +44,6 @@ Makefile
 docker-compose*.yml
 LICENSE
 README.md
-SECURITY.md
 .DS_Store
 
 # Deployment configuration (issue #28). These describe how to RUN the image;

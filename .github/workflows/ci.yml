@@ -294,12 +294,12 @@ jobs:
           dockerfile="$(sed -n 's/^FROM node:\([0-9][0-9]*\)-slim.*/\1/p' Dockerfile | head -1)"
           compose="$(sed -n 's/^[[:space:]]*image:[[:space:]]*node:\([0-9][0-9]*\)-slim.*/\1/p' docker-compose.override.yml | head -1)"
           engines="$(node -p "((require('./package.json').engines||{}).node||'').match(/[0-9]+/)?.[0] || ''")"
-          # The prose pin lives in CONTRIBUTING.md's "Local development"
+          # The prose pin lives in .github/CONTRIBUTING.md's "Local development"
           # section. It was in the README until issue #28 rebuilt that around
           # deploying rather than developing and moved the setup detail here;
           # this check followed the sentence rather than being weakened to
           # accept its absence.
-          contributing="$(sed -n 's/.*Node \([0-9][0-9]*\)+ and.*/\1/p' CONTRIBUTING.md | head -1)"
+          contributing="$(sed -n 's/.*Node \([0-9][0-9]*\)+ and.*/\1/p' .github/CONTRIBUTING.md | head -1)"
 
           # An empty capture means the pattern stopped matching — a silently
           # skipped comparison would be worse than no check at all.
