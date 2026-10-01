@@ -36,51 +36,41 @@ The application calls each platform's official API with your credentials.
 There is no aggregator in the middle and no payment provider to sign up for.
 Every installation has every feature.
 
-> **Status: pre-1.0.** The core platform is in place: tenancy and RBAC, all six
-> channel adapters, the flow engine and builder, contacts, the inbox,
-> sequences, broadcasts, analytics, the media library, and the public API.
-> Remaining work is tracked in [`docs/ROADMAP.md`](docs/ROADMAP.md). Read
-> [`SECURITY.md`](SECURITY.md) before pointing a real audience at it.
-
 ## How it compares to ManyChat
 
 | | ManyChat | BrightBean Chat |
 |---|---|---|
-| **Hosting** | Managed SaaS | Self-hosted: Docker Compose on your own server, or one-click on Railway |
-| **Pricing** | Per-contact tiers, with features gated by plan | One tier, every feature, no contact limits. Your only cost is the server |
-| **Your data** | Lives in ManyChat's account | Your PostgreSQL and your object storage |
-| **Platform access** | Through ManyChat's Meta app | Your own Meta, Twilio, and SMTP credentials, called directly. No aggregator |
-| **Source** | Proprietary | AGPL-3.0, so you can read it, change it, and run your fork |
-| **Extensibility** | Catalog of native integrations | Public REST API, signed outbound webhooks, and the External Request node |
-| **Channels** | Instagram, Messenger, WhatsApp, Telegram, SMS, email, TikTok | The same, minus TikTok, whose DM API is restricted to badged partners |
-| **AI features** | Built-in reply generation and intent detection | None, deliberately ([`docs/SPEC.md`](docs/SPEC.md) §1.1) |
+| <img src=".github/assets/icons/server.svg" width="18" height="18" alt=""> **Hosting** | Managed SaaS | Your server, or one click on Railway |
+| <img src=".github/assets/icons/tag.svg" width="18" height="18" alt=""> **Pricing** | Per-contact tiers, with features gated by plan | Free. Unlimited contacts, every feature |
+| <img src=".github/assets/icons/database.svg" width="18" height="18" alt=""> **Your data** | Lives in ManyChat's account | Your database, your storage |
+| <img src=".github/assets/icons/key-round.svg" width="18" height="18" alt=""> **Platform access** | Through ManyChat's Meta app | Your own apps, straight to each API. No middleman |
+| <img src=".github/assets/icons/code-xml.svg" width="18" height="18" alt=""> **Source** | Proprietary | Open source, AGPL-3.0 |
+| <img src=".github/assets/icons/plug.svg" width="18" height="18" alt=""> **Extensibility** | Catalog of native integrations | REST API, signed webhooks, and HTTP calls from any flow |
+| <img src=".github/assets/icons/message-circle.svg" width="18" height="18" alt=""> **Channels** | Instagram, Messenger, WhatsApp, Telegram, SMS, email, TikTok | Everything but TikTok |
+| <img src=".github/assets/icons/sparkles.svg" width="18" height="18" alt=""> **AI features** | Built-in reply generation and intent detection | None, by design |
 
-Self-hosting has costs ManyChat absorbs for you. ManyChat keeps the service
-running, and its Meta app is already approved. Running this yourself means
-creating your own Meta developer app, passing app review for the permissions
-each channel needs, and owning uptime, upgrades, and backups. If that is not a
-trade you want to make, ManyChat is the better product for you.
+There is no per-contact pricing, so growing your audience never pushes you onto
+a pricier plan, and every contact, flow and conversation stays in a database
+you own.
 
 ## Features
 
 | | |
 |---|---|
-| **Multi-channel automation** | One normalized event pipeline for Telegram, Instagram, Facebook Messenger, WhatsApp, SMS, and email. |
-| **Visual flow builder** | Versioned React Flow graphs with conditions, delays, randomizers, nested flows, external requests, data collection, actions, SMS, and email nodes. |
-| **Triggers** | Keywords, default replies, story mentions and replies, comment-to-DM, follows, ref URLs and QR codes, inbox rules, and the public API. |
-| **Shared inbox** | Threaded conversations with assignment, labels, reminders, scheduled replies, inbox rules, and human takeover that pauses automation. |
-| **Contacts** | Custom fields, tags, segments, cross-channel identities, import, and export. |
-| **Sequences & broadcasts** | Multi-step drip campaigns, audience filters, compliance checks, token-bucket pacing, live counters, and cancellation. |
-| **Analytics** | Per-node sent, delivered, failed, and clicked counters, plus flow and broadcast statistics. |
-| **Public API** | Bearer-authenticated REST endpoints and signed outbound webhooks for Make, Zapier, n8n, and custom integrations. |
-| **Multi-tenancy** | Organizations, workspaces, invitations, two-tier RBAC, and enforced tenant isolation. Cross-tenant object access answers 404. |
-| **Secure by default** | Encrypted credentials at rest, SSRF protection for user-supplied URLs, CSP nonces, webhook signature checks, opt-out enforcement, and production settings that reject placeholder secrets. |
+| <img src=".github/assets/icons/messages-square.svg" width="18" height="18" alt=""> **Multi-channel automation** | One normalized event pipeline for Telegram, Instagram, Facebook Messenger, WhatsApp, SMS, and email. |
+| <img src=".github/assets/icons/workflow.svg" width="18" height="18" alt=""> **Visual flow builder** | Versioned React Flow graphs with conditions, delays, randomizers, nested flows, external requests, data collection, actions, SMS, and email nodes. |
+| <img src=".github/assets/icons/zap.svg" width="18" height="18" alt=""> **Triggers** | Keywords, default replies, story mentions and replies, comment-to-DM, follows, ref URLs and QR codes, inbox rules, and the public API. |
+| <img src=".github/assets/icons/inbox.svg" width="18" height="18" alt=""> **Shared inbox** | Threaded conversations with assignment, labels, reminders, scheduled replies, inbox rules, and human takeover that pauses automation. |
+| <img src=".github/assets/icons/users.svg" width="18" height="18" alt=""> **Contacts** | Custom fields, tags, segments, cross-channel identities, import, and export. |
+| <img src=".github/assets/icons/megaphone.svg" width="18" height="18" alt=""> **Sequences & broadcasts** | Multi-step drip campaigns, audience filters, compliance checks, token-bucket pacing, live counters, and cancellation. |
+| <img src=".github/assets/icons/chart-column.svg" width="18" height="18" alt=""> **Analytics** | Per-node sent, delivered, failed, and clicked counters, plus flow and broadcast statistics. |
+| <img src=".github/assets/icons/webhook.svg" width="18" height="18" alt=""> **Public API** | Bearer-authenticated REST endpoints and signed outbound webhooks for Make, Zapier, n8n, and custom integrations. |
+| <img src=".github/assets/icons/building-2.svg" width="18" height="18" alt=""> **Multi-tenancy** | Organizations, workspaces, invitations, two-tier RBAC, and enforced tenant isolation. Cross-tenant object access answers 404. |
+| <img src=".github/assets/icons/shield-check.svg" width="18" height="18" alt=""> **Secure by default** | Encrypted credentials at rest, SSRF protection for user-supplied URLs, CSP nonces, webhook signature checks, opt-out enforcement, and production settings that reject placeholder secrets. |
 
-Deliberately out of scope for v1: AI reply generation, TikTok DM automation,
-native mobile apps, e-commerce, website growth widgets, and built-in third-party
-CRM/Zapier-style connectors. The integration surface is the public API,
-outbound webhooks, and the External Request flow node
-([`docs/SPEC.md`](docs/SPEC.md) §1.1).
+Put together: a comment on your Instagram post opens a DM, a flow asks a few
+questions and tags the lead, a sequence follows up over the next week, and a
+teammate can step in from the inbox whenever someone needs a human.
 
 ## Supported channels
 
@@ -90,12 +80,12 @@ checked before every send.
 
 | Channel | Inbound | Outbound | Important behavior |
 |---|---|---|---|
-| **Telegram** | Messages, button presses, and `/start` referrals | Text, images, audio, video, files, buttons, and quick replies | No messaging window; contacts must have opted in by messaging the bot. |
-| **Instagram** | DMs, comments, story mentions, and story replies | Text, media, cards, galleries, buttons, and quick replies | 24-hour messaging window; comment-to-DM supports one private reply per comment within seven days; no broadcasts. |
-| **Facebook Messenger** | DMs, postbacks, referrals, and Page comments | Text, media, cards, galleries, buttons, and quick replies | 24-hour window; approved message tags support permitted outside-window sends and broadcasts. |
-| **WhatsApp** | Messages and delivery/read status updates | Text, media, buttons, quick replies, and approved templates | 24-hour window; approved templates are required outside it. Template management is built in. |
-| **SMS** | Inbound texts and carrier opt-out keywords | SMS and outbound MMS images | Bring your own Twilio account. STOP/HELP/START handling and GSM-7/UCS-2 segment previews are built in. |
-| **Email** | Provider bounce notifications only (not conversations) | HTML and plain-text email, inline images, unsubscribe links, and tracked links | Bring your own SMTP, Resend, or SES credentials. Unsubscribe and hard-bounce suppression are enforced. |
+| <img src=".github/assets/channels/telegram.svg" width="20" height="20" alt=""> **Telegram** | Messages, button presses, and `/start` referrals | Text, images, audio, video, files, buttons, and quick replies | No messaging window; contacts must have opted in by messaging the bot. |
+| <img src=".github/assets/channels/instagram.svg" width="20" height="20" alt=""> **Instagram** | DMs, comments, story mentions, and story replies | Text, media, cards, galleries, buttons, and quick replies | 24-hour messaging window; comment-to-DM supports one private reply per comment within seven days; no broadcasts. |
+| <img src=".github/assets/channels/messenger.svg" width="20" height="20" alt=""> **Facebook Messenger** | DMs, postbacks, referrals, and Page comments | Text, media, cards, galleries, buttons, and quick replies | 24-hour window; approved message tags support permitted outside-window sends and broadcasts. |
+| <img src=".github/assets/channels/whatsapp.svg" width="20" height="20" alt=""> **WhatsApp** | Messages and delivery/read status updates | Text, media, buttons, quick replies, and approved templates | 24-hour window; approved templates are required outside it. Template management is built in. |
+| <img src=".github/assets/channels/sms.svg" width="20" height="20" alt=""> **SMS** | Inbound texts and carrier opt-out keywords | SMS and outbound MMS images | Bring your own Twilio account. STOP/HELP/START handling and GSM-7/UCS-2 segment previews are built in. |
+| <img src=".github/assets/channels/email.svg" width="20" height="20" alt=""> **Email** | Provider bounce notifications only (not conversations) | HTML and plain-text email, inline images, unsubscribe links, and tracked links | Bring your own SMTP, Resend, or SES credentials. Unsubscribe and hard-bounce suppression are enforced. |
 
 Meta's platforms need a developer app of your own, set as environment
 variables. See [Platform credentials](#platform-credentials). SMS and email need
@@ -271,7 +261,7 @@ Network, app ads, Catalog, Threads, Instant Games, Live Video, oEmbed,
 fundraiser, data portability and ThreatExchange are all unrelated, and each one
 you add is another permission set to justify at App Review.
 
-### Instagram
+### <img src=".github/assets/channels/instagram.svg" width="24" height="24" alt=""> Instagram
 
 Runs on the Instagram API with Instagram Login, against professional accounts,
 Business or Creator. No Facebook Page in the middle.
@@ -308,7 +298,7 @@ public reply. Verification passes while the app is in development, but no
 deliveries arrive until it is published. See
 [`docs/channels/instagram.md`](docs/channels/instagram.md).
 
-### Facebook Messenger
+### <img src=".github/assets/channels/messenger.svg" width="24" height="24" alt=""> Facebook Messenger
 
 1. Create an app of type **Business**, add both Messenger use cases, and add the
    **Facebook Login for Business** product.
@@ -336,7 +326,7 @@ pages through its own OAuth flow and subscribes each one to `messages`,
 that subscription fails, and a page then connects and silently never delivers.
 See [`docs/channels/messenger.md`](docs/channels/messenger.md).
 
-### WhatsApp
+### <img src=".github/assets/channels/whatsapp.svg" width="24" height="24" alt=""> WhatsApp
 
 No OAuth. You paste a system user token into the connect page rather than
 authorizing through Meta. The app secret is still required, because it is what

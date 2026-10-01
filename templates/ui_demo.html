@@ -215,6 +215,30 @@ nothing but a form posting to a toast_response view.
         </div>
     </section>
 
+    {% comment %}x-data of its own: this page may render without the app shell, whose scope every other trigger sits in.{% endcomment %}
+    <section x-data>
+        <h2 class="text-sm font-semibold mb-1" style="color: var(--text-primary);">Modal</h2>
+        <p class="text-[13px] mb-3" style="color: var(--text-tertiary);">
+            Every create form lives in one: the button names the thing, the dialog asks for its name.
+            <code>{% templatetag openblock %} modal "id" title="…" close_on="event" {% templatetag closeblock %}</code>, opened with <code>$modal('id')</code>.
+        </p>
+        <button type="button" class="btn-pill-primary" @click="$modal('demo-modal')">New tag</button>
+        {% modal "demo-modal" title="New tag" %}
+        <form @submit.prevent="close()">
+            <div class="bb-modal-body">
+                <div class="field">
+                    <label class="field-label" for="demo-modal-name">What is the tag called?</label>
+                    <input class="form-input-styled" id="demo-modal-name" type="text" name="name" required autofocus placeholder="VIP">
+                </div>
+            </div>
+            <div class="bb-modal-actions">
+                <button type="button" class="btn-pill-secondary" @click="close()">Cancel</button>
+                <button type="submit" class="btn-pill-primary">Create tag</button>
+            </div>
+        </form>
+        {% endmodal %}
+    </section>
+
     <section>
         <h2 class="text-sm font-semibold mb-3" style="color: var(--text-primary);">Buttons and chips</h2>
         <div class="card p-5">

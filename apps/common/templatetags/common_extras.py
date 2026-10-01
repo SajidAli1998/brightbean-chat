@@ -10,6 +10,8 @@ from collections.abc import Iterable
 from typing import Any
 
 from django import template
+from django.template.base import FilterExpression, NodeList, Parser, Token, token_kwargs
+from django.template.context import Context
 from django.utils.html import escape
 from django.utils.safestring import SafeString, mark_safe
 
@@ -196,3 +198,79 @@ def ui_select(
         "placeholder": placeholder,
         "icon": icon,
     }
+
+
+# The widths components/modal.html knows. Anything else raises at render rather
+# than falling back to the default, for the same reason ui_select's icon does: a
+# typo should be loud at the call site, not a quietly narrow form.
+MODAL_SIZES = frozenset({"", "lg"})
+MODAL_ARGS = frozenset({"title", "close_on", "open", "size"})
+
+
+class ModalNode(template.Node):
+    def __init__(self, nodelist: NodeList, modal_id: FilterExpression, kwargs: dict[str, FilterExpression]) -> None:
+        self.nodelist = nodelist
+        self.modal_id = modal_id
+        self.kwargs = kwargs
+
+    def render(self, context: Context) -> str:
+        values = {name: expression.resolve(context) for name, expression in self.kwargs.items()}
+        size = values.get("size") or ""
+        if size not in MODAL_SIZES:
+            raise ValueError(f"modal: unknown size {size!r}; expected one of {sorted(MODAL_SIZES)}")
+        assert context.template is not None  # noqa: S101 - always set while a template renders
+        dialog = context.template.engine.get_template("components/modal.html")
+        with context.push(
+            id=self.modal_id.resolve(context),
+            title=values.get("title", ""),
+            close_on=values.get("close_on") or "",
+            open=bool(values.get("open")),
+            size=size,
+            body=self.nodelist.render(context),
+        ):
+            return dialog.render(context)
+
+
+@register.tag
+def modal(parser: Parser, token: Token) -> ModalNode:
+    """A dialog around whatever the block contains — usually one create form.
+
+        {% modal "new-tag" title="New tag" close_on="tagsChanged" %}
+          <form hx-post="...">...</form>
+        {% endmodal %}
+
+    Inside the form: a ``.bb-modal-body`` of fields, the first with
+    ``autofocus``, then a ``.bb-modal-actions`` row — Cancel calling
+    ``close()``, then the submit. Open it from anywhere with
+    ``@click="$modal('new-tag')"``. templates/contacts/tag_list.html is the
+    plainest example.
+
+    Args:
+      id        positional; the dialog's DOM id, and the argument to ``$modal``.
+      title     the heading, which also labels the dialog.
+      close_on  an HX-Trigger event name. The dialog closes after a response
+                that sets it, and stays open on any other — including a 204
+                refusal, so the typed value survives the error toast. Omit it
+                for a form that navigates away on success.
+      open      truthy opens the dialog on load: for a page that answers a
+                refused plain POST by re-rendering itself with the error.
+      size      "" (default) or "lg", for forms longer than a field or two.
+
+    A block tag rather than an inclusion tag because the caller supplies the
+    body. Everything else — the heading, the close button, the backdrop
+    handling — is the component's, so no page can drift from the others.
+    """
+    bits = token.split_contents()
+    if len(bits) < 2:
+        raise template.TemplateSyntaxError("modal takes the dialog id as its first argument")
+    modal_id = parser.compile_filter(bits[1])
+    remaining = bits[2:]
+    kwargs = token_kwargs(remaining, parser)
+    if remaining:
+        raise template.TemplateSyntaxError(f"modal: unexpected arguments {remaining}")
+    unknown = set(kwargs) - MODAL_ARGS
+    if unknown:
+        raise template.TemplateSyntaxError(f"modal: unknown arguments {sorted(unknown)}")
+    nodelist = parser.parse(("endmodal",))
+    parser.delete_first_token()
+    return ModalNode(nodelist, modal_id, kwargs)

@@ -634,6 +634,19 @@ class TestTheWorkspaceSettingsAreReachable:
 
         assert 'class="flex-shrink-0" width="18" height="18"' in html
 
+    def test_every_nav_row_names_a_glyph_the_partial_draws(self):
+        """`partials/_nav_icon.html` draws a neutral dot for a name it does not
+        know — deliberately visible, but a dot in a row of Lucide glyphs reads
+        as a design choice in review, not as a typo. Every nav the sidebar and
+        the tab strip render is checked against the partial's own branches."""
+        from apps.common.context_processors import FLOWS_TABS, MAIN_NAV, SETTINGS_NAV
+
+        source = (Path(__file__).parents[3] / "templates/partials/_nav_icon.html").read_text()
+        drawn = set(re.findall(r'name == "([a-z_]+)"', source))
+        asked = {item.icon for nav in (MAIN_NAV, SETTINGS_NAV, FLOWS_TABS) for group in nav for item in group.items}
+
+        assert asked - drawn == set()
+
 
 @pytest.mark.django_db
 class TestTheAccountMenu:

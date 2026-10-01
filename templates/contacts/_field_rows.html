@@ -63,7 +63,7 @@ even with one item in it, so these rows do not disagree with the tag rows.
       A field is where a flow puts an answer it collected — a size, a booking date, a plan — so a
       filter can search on it later.
     </p>
-    <button type="button" class="btn-pill-secondary mt-4" @click="adding = true">New field</button>
+    <button type="button" class="btn-pill-secondary mt-4" @click="$modal('new-field')">New field</button>
   </div>
   {% endif %}
 </div>

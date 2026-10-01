@@ -156,12 +156,8 @@ for free.
           <button type="button" class="btn-outline btn-inline"
                   @click="$refs.updateSegment.requestSubmit()">Update “{{ query.segment.name }}”</button>
         {% endif %}
-        <label for="segment-name" class="sr-only">Segment name</label>
-        <input type="text" id="segment-name" class="w-52" x-model="segmentName"
-               placeholder="Save as a new segment…" maxlength="100">
         <button type="button" class="btn-outline btn-inline"
-                :disabled="!segmentName.trim()"
-                @click="$refs.saveSegment.requestSubmit()">Save as segment</button>
+                @click="$modal('save-segment')">Save as segment</button>
       </span>
 
       {% if filter_config.segmentId %}

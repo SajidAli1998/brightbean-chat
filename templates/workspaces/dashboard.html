@@ -55,7 +55,7 @@ goes.
         </div>
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {% for step in setup_steps %}
-            <div class="{% if step.current %}tile-selected{% else %}tile{% endif %} p-[18px]">
+            <div class="tile{% if step.current %} tile-selected{% endif %} p-[18px]">
                 <div class="flex items-center gap-2.5 mb-2.5">
                     {% if step.done %}
                     <span class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"

@@ -7,7 +7,10 @@ same nav data as everything else, so "which tab am I on" stays the one
 convention resolved in NavItem.resolved() rather than a fourth.
 
 Args:
-  groups: rendered nav groups — flow_tab_groups, for now the only caller.
+  groups: rendered nav groups — flow_tab_groups, for now the only set. Each page
+          the strip leads to has to include it too (flows/list.html,
+          campaigns/list.html, flows/template_gallery.html), or the tab that
+          was just clicked vanishes along with its neighbours.
 {% endcomment %}
 <nav class="subnav" aria-label="Section">
     {% for group in groups %}{% for item in group.items %}
