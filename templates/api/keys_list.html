@@ -2,19 +2,20 @@
 {% comment %}
 API keys, in the shape contacts/tag_list.html established.
 
-The issue form re-opens on an error — `adding || error` — because issue_key
-answers a refusal by re-rendering this page at status 400 rather than
-redirecting, and a disclosure that closed itself would hide the form that
-produced the message.
+The issue form is a modal that opens itself on an error (`open=error`), because
+issue_key answers a refusal by re-rendering this page at status 400 rather than
+redirecting, and a dialog that stayed shut would hide the form that produced the
+message. The message renders inside it, next to the fields it is about.
 
 No named action on a row: the only thing you can do to a key is revoke it, and a
 destructive action is the one thing that must not be the row's obvious button.
 {% endcomment %}
+{% load common_extras %}
 {% block title %}API keys · BrightBean Chat{% endblock %}
 {% block content_wrap %}{% endblock %}
 
 {% block content %}
-<div class="max-w-[860px] w-full" x-data="{ adding: {% if error %}true{% else %}false{% endif %} }">
+<div class="max-w-[860px] w-full">
     <div class="flex flex-wrap items-end justify-between gap-6 mb-6">
         <div>
             <h1 class="page-title">API keys</h1>
@@ -25,23 +26,23 @@ destructive action is the one thing that must not be the row's obvious button.
             </p>
         </div>
         {% if workspaces %}
-        <button type="button" class="btn-pill-primary flex-shrink-0" @click="adding = true; $nextTick(() => $refs.newName.focus())">{% include "partials/_nav_icon.html" with name="key" icon_size=16 %} Issue a key</button>
+        <button type="button" class="btn-pill-primary flex-shrink-0" @click="$modal('issue-key')">{% include "partials/_nav_icon.html" with name="key" icon_size=16 %} Issue a key</button>
         {% endif %}
     </div>
 
-    {% if error %}<div class="alert-error mb-5">{{ error }}</div>{% endif %}
-
     {% if workspaces %}
-    <form class="card p-6 mb-5" method="post" action="{% url 'api_keys_issue' %}" x-show="adding" x-cloak>
+    {% modal "issue-key" title="Issue a key" open=error size="lg" %}
+    <form method="post" action="{% url 'api_keys_issue' %}">
         {% csrf_token %}
-        <h2 class="section-title mb-5">Issue a key</h2>
+        <div class="bb-modal-body">
+        {% if error %}<div class="alert-error mb-5">{{ error }}</div>{% endif %}
         <div class="field">
             <label class="field-label" for="key-name">Name</label>
-            <input class="form-input-styled" id="key-name" x-ref="newName" type="text" name="name" maxlength="100" required placeholder="Zapier scenario" value="{{ submitted_name }}" style="width: 20rem;">
+            <input class="form-input-styled" id="key-name" type="text" name="name" maxlength="100" required autofocus placeholder="Zapier scenario" value="{{ submitted_name }}">
         </div>
         <div class="field">
             <label class="field-label" for="key-workspace">Workspace</label>
-            <select class="form-input-styled bb-select" id="key-workspace" name="workspace" required style="width: 20rem;">
+            <select class="form-input-styled bb-select" id="key-workspace" name="workspace" required>
                 {% for workspace in workspaces %}<option value="{{ workspace.id }}" {% if workspace.id|stringformat:'s' == submitted_workspace %}selected{% endif %}>{{ workspace.name }}</option>{% endfor %}
             </select>
         </div>
@@ -59,11 +60,13 @@ destructive action is the one thing that must not be the row's obvious button.
                 and sending messages. No scope grants channel, member or key management.
             </p>
         </div>
-        <div class="form-actions">
+        </div>
+        <div class="bb-modal-actions">
+            <button type="button" class="btn-pill-secondary" @click="close()">Cancel</button>
             <button type="submit" class="btn-pill-primary">Issue key</button>
-            <button type="button" class="btn-pill-secondary" @click="adding = false">Cancel</button>
         </div>
     </form>
+    {% endmodal %}
     {% else %}
     {% comment %}
     Both gates have to pass to issue a key: organization admin (which the page
