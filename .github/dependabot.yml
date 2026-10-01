@@ -5,13 +5,20 @@
 # the plain layout Dependabot bumps in place — one PR per package, no
 # recompilation step.
 #
+# The directory is "/" rather than "/requirements" on purpose. From "/",
+# Dependabot also looks one level down and accepts any .txt file whose path
+# contains "requirements", so base.txt and dev.txt are picked up by name.
+# Pointed at "/requirements" it would see bare "base.txt" and "dev.txt" and fall
+# back to checking every line against its own requirement grammar, which a
+# single line it does not understand is enough to fail.
+#
 # The vulnerable fixture under tests/fixtures/ is deliberately not registered
-# here: it is a CI self-test, not a dependency, and must stay on its
-# vulnerable version.
+# here, and sits two levels down where that one-level lookup does not reach: it
+# is a CI self-test, not a dependency, and must stay on its vulnerable version.
 version: 2
 updates:
   - package-ecosystem: "pip"
-    directory: "/requirements"
+    directory: "/"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10

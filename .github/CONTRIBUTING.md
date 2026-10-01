@@ -32,6 +32,10 @@ you the right one. Stay on an LTS line — the range is open-ended upward so new
 LTS releases work without a repo change, but only the pinned major is actually
 built and tested.
 
+`.python-version` does the same job for Python. Nothing in the repo reads it,
+but pyenv, uv and mise do, and it is what makes the `python` below a 3.12 rather
+than whatever your machine defaults to.
+
 ```bash
 python -m venv .venv && source .venv/bin/activate
 make setup
@@ -87,6 +91,12 @@ so a clone with no Node still serves working pages — the stylesheet and the fl
 builder are the two things that need building. Without them the app runs
 unstyled, and the builder page renders a notice saying to run `make frontend`
 rather than a broken canvas.
+
+Both bundles are gitignored, so `git pull` never refreshes them: run
+`make frontend` again after pulling a change to the stylesheet or the builder.
+A clone from before October 2026 may also still hold a root-level `theme/`
+folder containing an old compiled stylesheet. The app moved to `apps/theme/`,
+nothing reads the old folder, and it is safe to delete.
 
 The builder is generated from the schema artefact: node types, their config
 forms, their handles and the palette drawers all come from
