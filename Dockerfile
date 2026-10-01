@@ -63,7 +63,7 @@ RUN npm run build:js \
 # Studio's image is single-stage and ships pip's build cache, the dev tooling
 # and a compiler toolchain into production. Here the runtime stage gets the
 # virtualenv and nothing else. Only the runtime requirements are installed:
-# pytest, ruff and mypy live in requirements-dev.txt and never reach the image.
+# pytest, ruff and mypy live in requirements/dev.txt and never reach the image.
 FROM python:3.12-slim AS builder
 
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
@@ -73,10 +73,10 @@ RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 WORKDIR /app
-COPY requirements.txt .
+COPY requirements/base.txt ./requirements/base.txt
 # psycopg[binary] and cryptography ship manylinux wheels, so no compiler or
 # libpq-dev is needed — which is also why the runtime stage stays minimal.
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements/base.txt
 
 # ---------------------------------------------------------------------------
 # Runtime

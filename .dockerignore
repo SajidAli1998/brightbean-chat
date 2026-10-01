@@ -39,7 +39,7 @@ apps/flows/static/flows/builder/
 docs/
 tests/
 conftest.py
-requirements-dev.txt
+requirements/dev.txt
 Makefile
 docker-compose*.yml
 LICENSE

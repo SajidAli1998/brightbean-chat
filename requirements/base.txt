@@ -8,7 +8,7 @@
 # environments sit on an older one, so a release broke 509 tests in CI that
 # passed locally. Dependabot (.github/dependabot.yml) moves these forward.
 #
-# Development and test tooling lives in requirements-dev.txt so the runtime
+# Development and test tooling lives in requirements/dev.txt so the runtime
 # image does not ship pytest, ruff and mypy.
 
 # Core

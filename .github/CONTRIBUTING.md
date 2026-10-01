@@ -272,9 +272,9 @@ the change — and every `request.org` consumer inherits it.
 
 ## Dependencies
 
-`requirements.txt` (runtime) and `requirements-dev.txt` (tooling) list direct
+`requirements/base.txt` (runtime) and `requirements/dev.txt` (tooling) list direct
 dependencies at exact versions, and are both edited by hand — there is no
-compile step. `requirements-dev.txt` includes `-r requirements.txt`, so it
+compile step. `dev.txt` includes `-r base.txt`, so it
 installs a complete development environment on its own.
 
 Add a dependency by adding the pinned line and a comment saying why it is

@@ -1,4 +1,4 @@
-# Dependabot keeps the pins in requirements.txt / requirements-dev.txt,
+# Dependabot keeps the pins in requirements/base.txt / requirements/dev.txt,
 # package.json and the workflow action SHAs moving (SECURITY-BASELINE §10).
 #
 # Both requirements files list direct dependencies at exact versions, which is
@@ -11,7 +11,7 @@
 version: 2
 updates:
   - package-ecosystem: "pip"
-    directory: "/"
+    directory: "/requirements"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10

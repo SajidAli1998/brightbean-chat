@@ -265,7 +265,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # bcrypt(sha256) first, PBKDF2 retained so existing hashes still verify and are
-# upgraded transparently. Requires the `bcrypt` package (requirements.txt).
+# upgraded transparently. Requires the `bcrypt` package (requirements/base.txt).
 PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
     "django.contrib.auth.hashers.PBKDF2PasswordHasher",
