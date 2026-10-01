@@ -125,6 +125,34 @@ class TestTheList:
 
 
 @pytest.mark.django_db
+class TestTheCreateModal:
+    """Creating a sequence asks for its name in a dialog, not in a bare field
+    beside the button."""
+
+    @pytest.mark.parametrize("role", ALLOWED_ROLES)
+    def test_an_editor_gets_the_button_and_the_dialog(self, tenancy, client_for, role):
+        body = client_for(tenancy.user_for(role)).get(url(tenancy, "")).content.decode()
+
+        assert "$modal('new-sequence')" in body
+        dialog = body[body.index('<dialog id="new-sequence"') : body.index("</dialog>")]
+        assert "x-data=\"bbModal('sequencesChanged')\"" in dialog
+        assert f'hx-post="{url(tenancy, "create/")}"' in dialog
+        assert 'name="name"' in dialog
+        assert "autofocus" in dialog
+
+    @pytest.mark.parametrize("role", READ_ONLY_ROLES)
+    def test_a_read_only_member_gets_neither(self, tenancy, client_for, role):
+        body = client_for(tenancy.user_for(role)).get(url(tenancy, "")).content.decode()
+
+        assert "new-sequence" not in body
+
+    def test_the_old_inline_field_is_gone(self, tenancy, client_for):
+        body = client_for(tenancy.owner).get(url(tenancy, "")).content.decode()
+
+        assert 'placeholder="New sequence name"' not in body
+
+
+@pytest.mark.django_db
 class TestMutations:
     def test_creating_one_answers_a_toast_and_a_refresh_event(self, tenancy, client_for):
         response = client_for(tenancy.owner).post(url(tenancy, "create/"), {"name": "Onboarding"})
@@ -498,6 +526,18 @@ class TestTheNav:
         )
         assert row["url"] == url(tenancy, "")
         assert row["active"] is True
+
+    def test_the_tab_strip_is_rendered_and_not_only_in_the_context(self, tenancy, client_for):
+        """The test above passed for as long as the page existed while the page
+        drew no strip at all: `flow_tab_groups` is built for every request by
+        the context processor, so only the rendered page can say whether this
+        template includes it."""
+        body = client_for(tenancy.owner).get(url(tenancy, "")).content.decode()
+
+        strip = body[body.index('<nav class="subnav"') : body.index("</nav>", body.index('<nav class="subnav"'))]
+        assert f'href="{url(tenancy, "")}" class="subnav-item active"' in strip
+        assert 'aria-current="page">Sequences</a>' in strip
+        assert ">Flows</a>" in strip
 
     def test_the_flows_rail_row_stays_lit_on_a_sequences_page(self, tenancy, client_for):
         """The tab strip hangs under that row, so the rail has to agree that

@@ -328,3 +328,68 @@ class TestPlatformClass:
         drawn = set(re.findall(r'platform == "([a-z_]+)"', partial))
 
         assert drawn == set(PLATFORMS)
+
+
+class TestModal:
+    """`{% modal %}` — the dialog every create form in the product lives in."""
+
+    @staticmethod
+    def render(source, **context):
+        return Template("{% load common_extras %}" + source).render(Context(context))
+
+    def test_it_renders_a_labelled_dialog_around_the_body(self):
+        html = self.render('{% modal "new-tag" title="New tag" %}<form id="inside"></form>{% endmodal %}')
+
+        assert '<dialog id="new-tag" class="bb-modal" aria-labelledby="new-tag-title"' in html
+        assert '<h2 id="new-tag-title" class="section-title">New tag</h2>' in html
+        assert '<form id="inside"></form>' in html
+        assert html.index('id="new-tag-title"') < html.index('id="inside"')
+
+    def test_close_on_reaches_the_component_escaped_for_a_js_string(self):
+        html = self.render('{% modal "m" title="T" close_on=event %}{% endmodal %}', event="tags'Changed")
+
+        assert "x-data=\"bbModal('tags\\u0027Changed')\"" in html
+
+    def test_no_close_on_means_it_never_closes_itself(self):
+        html = self.render('{% modal "m" title="T" %}{% endmodal %}')
+
+        assert "x-data=\"bbModal('')\"" in html
+
+    @pytest.mark.parametrize(("value", "opens"), [("A refusal", True), ("", False), (None, False)])
+    def test_open_is_for_a_page_that_re_rendered_with_an_error(self, value, opens):
+        html = self.render('{% modal "m" title="T" open=error %}{% endmodal %}', error=value)
+
+        assert ("show()" in html) is opens
+
+    def test_the_title_is_escaped(self):
+        html = self.render('{% modal "m" title=title %}{% endmodal %}', title="<b>Tags</b>")
+
+        assert "<b>" not in html
+        assert "&lt;b&gt;Tags&lt;/b&gt;" in html
+
+    def test_the_large_size_widens_it(self):
+        html = self.render('{% modal "m" title="T" size="lg" %}{% endmodal %}')
+
+        assert 'class="bb-modal bb-modal-lg"' in html
+
+    def test_an_unknown_size_raises_instead_of_rendering_the_default(self):
+        with pytest.raises(ValueError, match="unknown size"):
+            self.render('{% modal "m" title="T" size="huge" %}{% endmodal %}')
+
+    def test_an_unknown_argument_is_a_syntax_error(self):
+        from django.template import TemplateSyntaxError
+
+        with pytest.raises(TemplateSyntaxError, match="unknown arguments"):
+            self.render('{% modal "m" titel="T" %}{% endmodal %}')
+
+    def test_the_body_sees_the_caller_s_context(self):
+        """The body is the caller's markup, so it must resolve the caller's
+        variables — a form's action URL, a page's error — not the component's."""
+        html = self.render('{% modal "m" title="T" %}{{ who }}{% endmodal %}', who="caller")
+
+        assert "caller" in html
+
+    def test_the_component_s_names_do_not_leak_into_the_rest_of_the_page(self):
+        html = self.render('{% modal "m" title="T" %}{% endmodal %}[{{ title }}]', title="page")
+
+        assert html.endswith("[page]")

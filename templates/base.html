@@ -233,6 +233,7 @@
   exist by the time it boots.
 {% endcomment %}
 <script src="{% static 'js/vendor/htmx.min.js' %}"></script>
+{% include "partials/_modal_behaviours.html" %}
 {% block alpine_components %}{% endblock %}
 <script src="{% static 'js/vendor/alpine.min.js' %}" defer></script>
 {% block extra_js %}{% endblock %}

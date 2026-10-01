@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load common_extras %}
 {% comment %}
 The sequence list. Everything below the toolbar is _list_rows.html, so the table
 has exactly one renderer: the filters fetch it, and every mutation answers with a
@@ -11,31 +12,47 @@ in docs/agent-prompts/layer-2.md.
 
 {% block title %}Sequences · BrightBean Chat{% endblock %}
 
-{% block page_header %}
-<div class="flex flex-wrap items-start justify-between gap-3 mb-6">
-    <div>
-        <h1 class="page-title">Sequences</h1>
-        <p class="text-sm" style="color: var(--text-secondary);">
-            A series of messages sent over days. Each step waits for the time you set, counting from the message before it, then runs a flow.
-        </p>
-    </div>
-    {% if can_edit %}
-    <form class="flex items-center gap-2"
-          hx-post="{% url 'campaigns:create' workspace_id=request.workspace.id %}"
-          hx-swap="none"
-          x-data
-          @htmx:after-request="$el.reset()">
-        {% csrf_token %}
-        <input type="text" name="name" maxlength="200" required placeholder="New sequence name"
-               class="form-input-styled" style="width: 14rem;" aria-label="New sequence name">
-        <button type="submit" class="btn-brand btn-inline">Create</button>
-    </form>
-    {% endif %}
-</div>
-{% endblock %}
+{% comment %}
+Sequences is the middle tab of the automations strip, so it carries the strip
+too — without it the Flows and Templates tabs vanished the moment this one was
+clicked. The header has the Flows page's shape for the same reason: three tabs
+of one section should not move the title about as you switch between them.
+{% endcomment %}
+{% block sub_nav %}{% include "partials/_sub_nav.html" with groups=flow_tab_groups %}{% endblock %}
 
 {% block content %}
-<div>
+<div class="max-w-[1060px] w-full">
+    <div class="flex flex-wrap items-end justify-between gap-6 mb-6">
+        <div>
+            <h1 class="page-title">Sequences</h1>
+            <p class="page-lede mt-1.5">
+                A series of messages sent over days. Each step waits for the time you set, counting from the message before it, then runs a flow.
+            </p>
+        </div>
+        {% if can_edit %}
+        <button type="button" class="btn-pill-primary flex-shrink-0" @click="$modal('new-sequence')">
+            {% include "partials/_nav_icon.html" with name="sequences" icon_size=16 %} New sequence
+        </button>
+        {% endif %}
+    </div>
+
+    {% if can_edit %}
+    {% modal "new-sequence" title="New sequence" close_on="sequencesChanged" %}
+    <form hx-post="{% url 'campaigns:create' workspace_id=request.workspace.id %}" hx-swap="none">
+        <div class="bb-modal-body">
+            <div class="field">
+                <label class="field-label" for="new-sequence-name">What is this sequence called?</label>
+                <input class="form-input-styled" id="new-sequence-name" type="text" name="name" maxlength="200" required autofocus placeholder="New subscriber welcome">
+            </div>
+        </div>
+        <div class="bb-modal-actions">
+            <button type="button" class="btn-pill-secondary" @click="close()">Cancel</button>
+            <button type="submit" class="btn-pill-primary">Create sequence</button>
+        </div>
+    </form>
+    {% endmodal %}
+    {% endif %}
+
     <form id="sequence-filters"
           class="bb-filters-scroll flex items-center gap-2 overflow-x-auto pb-3"
           hx-get="{% url 'campaigns:list' workspace_id=request.workspace.id %}"
