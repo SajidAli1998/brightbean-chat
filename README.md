@@ -98,9 +98,10 @@ checked before every send.
 | **Email** | Provider bounce notifications only (not conversations) | HTML and plain-text email, inline images, unsubscribe links, and tracked links | Bring your own SMTP, Resend, or SES credentials. Unsubscribe and hard-bounce suppression are enforced. |
 
 Meta's platforms need a developer app of your own, set as environment
-variables. See [Platform credentials](#platform-credentials). Per-channel
-webhook URLs, permissions, and platform quirks are in
-[`docs/channels/`](docs/channels/).
+variables. See [Platform credentials](#platform-credentials). SMS and email need
+no app: you connect them from inside the product with your own provider
+account. See [Email and SMS](#email-and-sms). Per-channel webhook URLs,
+permissions, and platform quirks are in [`docs/channels/`](docs/channels/).
 
 ## Try it locally
 
@@ -116,8 +117,8 @@ docker compose up
 Docker builds the image, starts PostgreSQL, runs migrations, and serves the app
 at <http://localhost:8000>. No `.env` is required for development. Sign up at
 `/accounts/signup/`; the first account gets its own organization and workspace.
-Email is written to the console, so verification messages are visible in
-`docker compose logs`.
+[Account email](#account-email) is written to the console, so verification
+messages are visible in `docker compose logs`.
 
 A running instance serves the design system's style guide at
 <http://localhost:8000/ui/>.
@@ -405,9 +406,10 @@ organization, so the endpoint reads only the environment. Leave it unset and
 that platform's verification answers 404, which means the webhook cannot be
 subscribed and no inbound events arrive at all.
 
-Telegram, SMS and email have no deployment-level credentials. A BotFather token,
-a Twilio account SID and an SMTP login all live on the individual channel
-connection.
+Telegram, SMS and the email channel have no deployment-level credentials. A
+BotFather token, a Twilio account SID and an SMTP login all live on the
+individual channel connection. The `EMAIL_*` variables in `.env` are something
+else, the deployment's own [account email](#account-email).
 
 ### What Meta has to approve
 
@@ -434,6 +436,92 @@ clearer screencast. This is Meta's process; nothing in this product changes it.
 Telegram, SMS and email have nothing to request. A BotFather token, a Twilio
 account SID and auth token, and an SMTP or provider key are all issued on the
 spot and reach every contact from the first message.
+
+## Email and SMS
+
+SMS and email need no developer app and no approval. Each is connected from
+inside the product, per workspace, with your own provider account, and takes a
+few minutes.
+
+"Email" means two separate things here, and they are set up in different places:
+
+| | Account email | Email channel |
+|---|---|---|
+| **What it sends** | Signup verification, password resets, member invitations, and notification emails | Flow, broadcast, and inbox messages |
+| **Who receives it** | People who log in to BrightBean Chat | Your contacts |
+| **Where you set it up** | `.env`, once per deployment | In the app, once per workspace |
+| **Providers** | Any SMTP server | SMTP, Resend, or Amazon SES |
+
+The two share nothing. Setting up one does not set up the other, and using the
+same provider for both means entering its credentials twice.
+
+### Account email
+
+Add your SMTP server to `.env` and restart:
+
+```dotenv
+EMAIL_HOST=smtp.example.com
+EMAIL_PORT=587
+EMAIL_HOST_USER=your-smtp-username
+EMAIL_HOST_PASSWORD=your-smtp-password
+EMAIL_USE_TLS=true
+DEFAULT_FROM_EMAIL=noreply@example.com
+```
+
+`EMAIL_USE_TLS` means STARTTLS, so use your provider's port 587. Port 465
+(implicit TLS) is not supported here. Resend and SES both offer an SMTP endpoint,
+so the provider behind your email channel can send these too. On Railway, set
+the variables on both `web` and `worker`, because the worker sends the
+notification emails.
+
+The app works without account email, since nothing is gated on a verified
+address. But nobody can reset a forgotten password, and invitations never
+arrive. In development, account email is always printed to the console instead
+of sent, whatever `.env` says.
+
+### SMS channel (Twilio)
+
+You need a Twilio account with a phone number, and a deployment that Twilio can
+reach over HTTPS at the address in `APP_URL`.
+
+1. In the [Twilio console](https://console.twilio.com/), copy the **Account
+   SID** and **Auth Token**.
+2. In BrightBean Chat, open *Settings → Channels*, find **SMS** under *Available
+   to connect*, and click **Set up**. Paste the two values, plus either your
+   number in E.164 form (`+15551234567`) or a Messaging Service SID (`MG…`), not
+   both.
+3. Open the new connection and copy its **Webhook URL**.
+4. In Twilio, open the number (*Phone Numbers → Manage → Active numbers*). Under
+   *Messaging Configuration*, set **A message comes in** to that URL, with
+   **HTTP POST**, and save.
+5. Text the number. The connection's status changes from *Connected, but
+   nothing has arrived yet* to *Healthy*, and the text appears in the inbox.
+
+If Twilio reports 403 errors, the URL in Twilio does not match `APP_URL`
+character for character. US numbers also need A2P 10DLC registration, which you
+do in Twilio. Messaging services, local development, and the STOP/HELP/START
+rules are in the [SMS guide](docs/channels/sms.md).
+
+### Email channel
+
+1. Pick the domain you will send from, and publish the SPF, DKIM, and DMARC
+   records your provider gives you. Gmail and Yahoo reject bulk mail from
+   domains without them.
+2. In BrightBean Chat, open *Settings → Channels*, find **Email** under
+   *Available to connect*, and click **Set up**. Choose SMTP, Resend, or SES,
+   then enter a from-address on that domain and the provider's credentials.
+   They are checked with the provider before anything is saved.
+3. On the new connection's page, click **Send a test email**. It goes to the
+   address you log in with.
+
+That is enough to send. Bounce handling is optional and needs Resend or SES: you
+point the provider at the connection's **Webhook URL**, then paste the secret it
+gives you into *Bounce handling* on the same page. The [email
+guide](docs/channels/email.md) has both providers step by step.
+
+The email channel only sends. Replies go to the from-address's mailbox, not to
+the BrightBean Chat inbox. Each domain can be claimed by only one workspace on a
+deployment.
 
 ## API & webhooks
 
