@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 
 import { defineConfig } from "vitest/config";
 
-const REPO = resolve(import.meta.dirname, "../..");
+const REPO = resolve(import.meta.dirname, "../../..");
 
 export default defineConfig({
   root: import.meta.dirname,
@@ -100,7 +100,7 @@ export default defineConfig({
     // contact filter builder is the first, and it is deliberately not a bundle
     // (fifty lines of Alpine glue for one page), so this is the only place a
     // test for it can run. The path is outside `root`, which vitest allows.
-    include: ["src/**/*.test.{ts,tsx}", "../../tests/js/**/*.test.{ts,tsx}"],
+    include: ["src/**/*.test.{ts,tsx}", "../../../tests/js/**/*.test.{ts,tsx}"],
     restoreMocks: true,
   },
 });

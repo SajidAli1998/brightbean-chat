@@ -86,7 +86,7 @@ class TestTheCommittedArtefact:
 
         from django.conf import settings
 
-        css = (Path(settings.BASE_DIR) / "theme/static_src/src/styles.css").read_text()
+        css = (Path(settings.BASE_DIR) / "apps/theme/static_src/src/styles.css").read_text()
 
         for key, _ in GROUPS:
             assert f".fb-node-{key}" in css, f"styles.css has no accent rule for palette group {key!r}"

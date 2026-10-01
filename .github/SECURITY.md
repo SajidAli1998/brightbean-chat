@@ -42,7 +42,7 @@ it ships and under what advisory.
 
 This project is pre-1.0. Only the current `main` branch is supported: fixes land
 there, and self-hosters upgrade by pulling and rebuilding
-([`docs/self-hosting.md`](docs/self-hosting.md) § Upgrades). There are no
+([`docs/self-hosting.md`](../docs/self-hosting.md) § Upgrades). There are no
 backports to older commits.
 
 ## Scope
@@ -63,7 +63,7 @@ backports to older commits.
 - disclosure of stored credentials, in responses, logs, error reports or admin
   pages
 - weaknesses in the reference deployment that would make a self-hoster following
-  [`docs/self-hosting.md`](docs/self-hosting.md) verbatim less safe than that
+  [`docs/self-hosting.md`](../docs/self-hosting.md) verbatim less safe than that
   document claims
 
 **Out of scope**
@@ -97,7 +97,7 @@ report you for it. The conditions all amount to "test your own instance":
   messaging platforms this integrates with.
 - Stop at proof. You do not need to pivot to demonstrate impact.
 
-[`docs/pentest-runbook.md`](docs/pentest-runbook.md) is the practical companion:
+[`docs/pentest-runbook.md`](../docs/pentest-runbook.md) is the practical companion:
 what to probe on your own instance, what a correct instance does in response,
 which routes are public by design, and a report template that gets a finding
 triaged faster.
@@ -115,11 +115,11 @@ crossed is the fastest way to have a report understood:
 
 ## How this project defends itself
 
-[`docs/SECURITY-BASELINE.md`](docs/SECURITY-BASELINE.md) is the per-PR security
+[`docs/SECURITY-BASELINE.md`](../docs/SECURITY-BASELINE.md) is the per-PR security
 checklist every change is reviewed against: tenancy isolation, untrusted inbound
 content, the template-injection ban, public token routes, secrets handling, the
 SSRF guard, input limits, web platform hardening, file uploads and supply chain.
-[`docs/security-audit.md`](docs/security-audit.md) maps every one of those items
+[`docs/security-audit.md`](../docs/security-audit.md) maps every one of those items
 to the test that enforces it, and records the ones only partly covered with the
 issue tracking each — worth reading before you spend time on an area, because
 the known gaps are written down.
@@ -134,7 +134,7 @@ implementation of it.
 ## Deploying safely
 
 The reference deployment is hardened by default and
-[`docs/self-hosting.md`](docs/self-hosting.md) carries an operator hardening
+[`docs/self-hosting.md`](../docs/self-hosting.md) carries an operator hardening
 checklist. The two things worth repeating here: the application refuses to boot
 in production without a real `SECRET_KEY` and `ENCRYPTION_KEY_SALT`, and a
 database dump contains your encrypted platform credentials — so back those two

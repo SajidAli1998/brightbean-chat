@@ -6,7 +6,7 @@
  * give every node type's config schema a distinct anonymous type that nothing
  * can be written against.
  *
- * frontend/builder/vite.config.mts aliases the specifier to the committed
+ * apps/flows/frontend/vite.config.mts aliases the specifier to the committed
  * artefact; tsconfig.json points it here.
  */
 declare module "@flow-schema" {

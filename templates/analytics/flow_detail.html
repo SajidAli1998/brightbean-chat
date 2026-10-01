@@ -96,7 +96,7 @@ this issue), so nothing here reaches a CDN.
     var canvas = document.getElementById("flow-trend");
     if (!canvas || typeof Chart === "undefined") { return; }
     // Read the theme's own tokens rather than hard-coding hexes: the palette is
-    // defined once in theme/static_src/src/styles.css and a chart that ignored
+    // defined once in apps/theme/static_src/src/styles.css and a chart that ignored
     // it would be the one element on the page that does not follow the theme.
     var style = getComputedStyle(document.documentElement);
     var token = function (name, fallback) { return (style.getPropertyValue(name) || fallback).trim(); };
