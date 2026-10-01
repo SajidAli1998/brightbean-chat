@@ -26,12 +26,12 @@
    Do not write a literal star-slash anywhere in this file: it closes the
    comment early, and the parse error it causes surfaces further down as an
    unterminated string, which is not a fun morning. */
-@source "../../../templates/**/*.html";
+@source "../../../../templates/**/*.html";
 /* The flow-builder island (issue #10). Its class names live in TSX, not in a
    template, so without this every utility the canvas uses is dropped from the
    bundle — and the only symptom is an unstyled panel in a production build.
    Like the glob above, the frontend stage of the Dockerfile has to copy it. */
-@source "../../../frontend/builder/src/**/*.{ts,tsx}";
+@source "../../../flows/frontend/src/**/*.{ts,tsx}";
 
 /* ═══════════════════════════════════════════════════════════════
    WHITE-LABEL TOKEN ARCHITECTURE

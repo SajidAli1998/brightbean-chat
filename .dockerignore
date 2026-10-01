@@ -32,7 +32,7 @@ node_modules/
 # Compiled by the `frontend` stage and COPYed into the runtime stage. Excluding
 # it here keeps a developer's stale local build out of the image entirely,
 # rather than relying on the later COPY to overwrite it.
-theme/static/css/dist/
+apps/theme/static/css/dist/
 apps/flows/static/flows/builder/
 
 # Not needed at runtime

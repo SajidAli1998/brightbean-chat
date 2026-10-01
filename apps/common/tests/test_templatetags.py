@@ -308,7 +308,7 @@ class TestPlatformClass:
         """A fallback that names an undefined class is the same bug moved."""
         from apps.common.templatetags.common_extras import PLATFORMS, platform_class
 
-        source = (Path(__file__).parents[3] / "theme/static_src/src/styles.css").read_text()
+        source = (Path(__file__).parents[3] / "apps/theme/static_src/src/styles.css").read_text()
 
         for key in [*PLATFORMS, "carrier-pigeon"]:
             assert f".{platform_class(key)} " in source or f".{platform_class(key)}{{" in source

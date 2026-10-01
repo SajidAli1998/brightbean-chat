@@ -557,16 +557,16 @@ brightbean-chat/
 │   ├── members/           # Invitations and RBAC
 │   ├── channels/          # Platform connections, adapters, and webhooks
 │   ├── flows/             # Flow models, builder API, engine, and triggers
+│   │   └── frontend/      # The flow builder, the application's React island
 │   ├── contacts/          # CRM, tags, fields, and segments
 │   ├── inbox/             # Shared conversations and human takeover
 │   ├── campaigns/         # Sequences
 │   ├── broadcasts/        # Broadcast composer and fanout
 │   ├── analytics/         # Flow and broadcast counters
 │   ├── media_library/     # Workspace-scoped uploads and media
-│   └── api/               # REST API and outbound webhooks
-├── frontend/builder/      # The application's React island
+│   ├── api/               # REST API and outbound webhooks
+│   └── theme/             # Tailwind source and design tokens
 ├── templates/             # Django templates and UI components
-├── theme/                 # Tailwind source and design tokens
 ├── docs/                  # Product, deployment, channel, and API docs
 ├── docker-compose.yml     # Development stack
 ├── docker-compose.prod.yml # Hardened production stack

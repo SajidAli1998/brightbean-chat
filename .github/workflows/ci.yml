@@ -79,7 +79,7 @@ jobs:
       - name: mypy
         # django-stubs loads config.settings.test, which supplies its own
         # SECRET_KEY / ENCRYPTION_KEY_SALT defaults — no secrets needed here.
-        run: mypy apps/ config/ theme/ tests/ --ignore-missing-imports
+        run: mypy apps/ config/ tests/ --ignore-missing-imports
 
       - name: Set up Node
         # Version from .nvmrc; the rationale is on the test job's copy below.
@@ -332,12 +332,12 @@ jobs:
         # churn the manifest hash on every deploy for no reason.
         run: |
           npm run build:css
-          cp theme/static/css/dist/styles.css /tmp/styles.first.css
-          rm -rf theme/static/css/dist
+          cp apps/theme/static/css/dist/styles.css /tmp/styles.first.css
+          rm -rf apps/theme/static/css/dist
           npm run build:css
-          cmp /tmp/styles.first.css theme/static/css/dist/styles.css
-          test -s theme/static/css/dist/styles.css
-          echo "Tailwind output is reproducible ($(wc -c < theme/static/css/dist/styles.css) bytes)."
+          cmp /tmp/styles.first.css apps/theme/static/css/dist/styles.css
+          test -s apps/theme/static/css/dist/styles.css
+          echo "Tailwind output is reproducible ($(wc -c < apps/theme/static/css/dist/styles.css) bytes)."
 
       - name: Flow-builder bundle is deterministic
         # The same contract as the Tailwind step above, for the same reason: a

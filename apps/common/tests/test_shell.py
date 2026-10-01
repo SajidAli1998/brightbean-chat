@@ -1132,14 +1132,14 @@ class TestStaticReferences:
         assert not missing, f"referenced but not found by any static finder: {missing}"
 
     def test_the_compiled_stylesheet_is_the_one_the_theme_app_serves(self):
-        """theme/ exists only to put the Tailwind output on the app-directories
+        """apps/theme/ exists only to put the Tailwind output on the app-directories
         finder. If it were dropped from INSTALLED_APPS this would be the symptom."""
         from django.contrib.staticfiles import finders
 
         found = finders.find("css/dist/styles.css")
 
         assert found, "the Tailwind bundle is missing — run `npm run build:css`"
-        assert "theme/static" in found.replace("\\", "/")
+        assert "apps/theme/static" in found.replace("\\", "/")
 
 
 class TestTailwindSourceCoverage:
@@ -1161,7 +1161,7 @@ class TestTailwindSourceCoverage:
     construction. The failure only shows up in a browser. Hence a test.
     """
 
-    CSS = Path(__file__).parents[3] / "theme" / "static_src" / "src" / "styles.css"
+    CSS = Path(__file__).parents[3] / "apps" / "theme" / "static_src" / "src" / "styles.css"
 
     def _globs(self):
         text = self.CSS.read_text()
@@ -1204,7 +1204,7 @@ class TestTailwindSourceCoverage:
         pattern = re.compile(r"""["']class["']\s*:|\bclass=["']""")
 
         offenders = []
-        for directory in ("apps", "config", "theme"):
+        for directory in ("apps", "config"):
             for path in (root / directory).rglob("*.py"):
                 if "/tests/" in path.as_posix() or "/migrations/" in path.as_posix():
                     continue
