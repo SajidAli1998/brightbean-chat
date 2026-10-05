@@ -50,8 +50,8 @@ TENANT_KWARG_RESOLVERS: dict[str, Callable[[Tenancy], Any]] = {
     # before the view can restore them; it scopes to request.org instead.
     "target_id": lambda t: t.workspace.pk,
     # apps.workspaces.views.logo avoids ``workspace_id`` too, so fetching every
-    # switcher row's logo does not move the user's last_workspace_id. It checks
-    # membership itself.
+    # switcher row's logo does not move the user's last_workspace_id. It scopes
+    # to the user's organization itself.
     "logo_workspace_id": lambda t: t.workspace.pk,
     "membership_id": lambda t: t.org_membership.pk,
     "invitation_id": lambda t: _victim_invitation(t).pk,
