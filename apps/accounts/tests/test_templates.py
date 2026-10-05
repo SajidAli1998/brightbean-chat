@@ -34,7 +34,9 @@ class TestAuthPagesRender:
         response = client_for(tenancy.owner).get(path, follow=True)
 
         assert response.status_code == 200
-        assert b"BrightBean Chat" in response.content
+        # Inside the shell the tab names the workspace (workspace_title in
+        # base.html), which only the shell's <title> can produce.
+        assert f"{tenancy.workspace.name}</title>".encode() in response.content
 
     def test_the_password_reset_confirmation_renders(self, client):
         create_user("resetme@example.test")
