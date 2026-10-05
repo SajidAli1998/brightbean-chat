@@ -52,7 +52,11 @@ column.
     <div class="card overflow-hidden">
         {% for workspace in workspaces %}
         <div class="list-row flex-wrap" x-data="{ ...bbRowMenu() }">
+            {% if workspace.logo_url %}
+            <span class="list-row-icon list-row-icon-logo"><img src="{{ workspace.logo_url }}" alt=""></span>
+            {% else %}
             <span class="list-row-icon">{% if workspace.icon %}{{ workspace.icon }}{% else %}{% include "partials/_nav_icon.html" with name="grid" icon_size=19 %}{% endif %}</span>
+            {% endif %}
 
             <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2.5">

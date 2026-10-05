@@ -7,7 +7,10 @@ import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 from PIL import Image
 
+from apps.members.models import OrgMembership
+from apps.members.roles import OrgRole
 from apps.workspaces.logo import LOGO_SIZE, LogoError, process_logo
+from tests.support import create_user
 
 
 def _image(fmt: str = "PNG", size: tuple[int, int] = (400, 200), name: str = "logo.png") -> SimpleUploadedFile:
@@ -141,6 +144,21 @@ class TestServing:
         assert response["Content-Type"] == "image/png"
         assert "immutable" in response["Cache-Control"]
 
+    def test_an_org_member_outside_the_workspace_gets_it(self, tenancy, client_for):
+        """The org's Workspaces page lists workspaces you are not in."""
+        url = self._with_logo(tenancy, client_for)
+        outsider = create_user("outsider@example.test")
+        OrgMembership.objects.create(user=outsider, organization=tenancy.organization, org_role=OrgRole.MEMBER)
+
+        assert client_for(outsider).get(url).status_code == 200
+
+    def test_an_archived_workspace_still_serves_it(self, tenancy, client_for):
+        url = self._with_logo(tenancy, client_for)
+        tenancy.workspace.is_archived = True
+        tenancy.workspace.save(update_fields=["is_archived"])
+
+        assert client_for(tenancy.owner).get(url).status_code == 200
+
     def test_another_tenant_gets_a_404(self, tenancy, other_tenancy, client_for):
         url = self._with_logo(tenancy, client_for)
 
@@ -180,6 +198,15 @@ class TestThePageShell:
         assert f'<link rel="icon" type="image/png" href="{tenancy.workspace.logo_url}">' in html
         assert "sidebar-logo-mark-image" in html
         assert "favicon/favicon.svg" not in html
+
+    def test_the_organizations_workspace_list_shows_it(self, tenancy, client_for):
+        client = client_for(tenancy.owner)
+        _upload(client, tenancy.workspace, logo=_image())
+        tenancy.workspace.refresh_from_db()
+
+        html = client.get("/organization/workspaces/").content.decode()
+
+        assert f'<img src="{tenancy.workspace.logo_url}"' in html
 
     def test_without_a_logo_the_brightbean_favicon_stays(self, tenancy, client_for):
         html = client_for(tenancy.owner).get(f"/w/{tenancy.workspace.pk}/").content.decode()

@@ -21,7 +21,7 @@ from apps.common.validators import is_valid_hex_color
 from apps.common.windows import is_valid_timezone, timezone_choices
 from apps.flows.portability.library import gallery_entries
 from apps.members.decorators import require_permission
-from apps.members.models import WorkspaceMembership
+from apps.members.models import OrgMembership, WorkspaceMembership
 from apps.members.requests import RBACRequest, WorkspaceRequest
 from apps.workspaces.logo import ACCEPT_ATTRIBUTE, LogoError, clear_logo, process_logo, set_logo
 from apps.workspaces.models import Workspace
@@ -405,26 +405,25 @@ def remove_logo(request: WorkspaceRequest, workspace_id: str) -> HttpResponse:
 @login_required
 @require_GET
 def logo(request: RBACRequest, logo_workspace_id: str) -> HttpResponseBase:
-    """Serve a workspace's logo to its members.
+    """Serve a workspace's logo to anyone in its organization.
 
     Mounted outside ``/w/`` with a kwarg that is deliberately not
     ``workspace_id``: RBACMiddleware records ``last_workspace_id`` on every
     request carrying that name, and the switcher draws every workspace's logo
     on every page — so the old name would quietly move the user's "current"
-    workspace to whichever one was listed last. The membership check the
-    middleware would have made is made here instead, with the same 404.
+    workspace to whichever one was listed last.
+
+    Scoped to the organization rather than to workspace membership because the
+    organization's Workspaces page lists every workspace, archived ones and
+    ones you are not in included, and shows their names to every org member
+    already. Another organization's logo answers 404, like any tenant route.
     """
-    membership = (
-        WorkspaceMembership.objects.filter(
-            user=request.user, workspace_id=logo_workspace_id, workspace__is_archived=False
-        )
-        .select_related("workspace")
-        .first()
-    )
-    if membership is None or not membership.workspace.logo:
+    org_ids = OrgMembership.objects.filter(user=request.user).values_list("organization_id", flat=True)
+    workspace = Workspace.objects.filter(pk=logo_workspace_id, organization_id__in=org_ids).first()
+    if workspace is None or not workspace.logo:
         raise Http404("No such logo.")
     try:
-        handle = membership.workspace.logo.open("rb")
+        handle = workspace.logo.open("rb")
     except (FileNotFoundError, OSError) as exc:
         raise Http404("No such logo.") from exc
     response = FileResponse(handle, content_type="image/png")
