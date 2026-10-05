@@ -24,7 +24,13 @@ The size modifier is a class from the design system, not a Tailwind utility.
 .sidebar-logo-mark is unlayered CSS and Tailwind's w-7/h-7 live in
 @layer utilities, so the utility loses the cascade and never applies.
 {% endcomment %}{% with px=size|default:"md" %}
-{% if workspace and workspace.icon %}
+{% if workspace and workspace.logo_url %}
+{% comment %}
+  The uploaded logo (apps/workspaces/logo.py) outranks the emoji. alt="" for
+  the same reason the text marks are aria-hidden: the name beside it says it.
+{% endcomment %}
+<img src="{{ workspace.logo_url }}" alt="" class="sidebar-logo-mark sidebar-logo-mark-image{% if px == "sm" %} sidebar-logo-mark-sm{% endif %}">
+{% elif workspace and workspace.icon %}
 {% comment %}
   An emoji, not a file. Studio's Workspace.icon is an ImageField and this read
   `workspace.icon.url`; here it is a short CharField (an ImageField would mean

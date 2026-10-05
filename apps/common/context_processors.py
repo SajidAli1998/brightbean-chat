@@ -762,6 +762,8 @@ def navigation_context(request: HttpRequest) -> dict[str, Any]:
                 # `.icon` then falls back to the name's initial, and a dict
                 # answers both lookups the same way a model does.
                 "icon": m.workspace.icon,
+                # And the uploaded logo, which outranks the emoji there too.
+                "logo_url": m.workspace.logo_url,
                 "url": reverse_cached("workspaces:dashboard", workspace_id=m.workspace_id) or "#",
                 "is_current": workspace is not None and m.workspace_id == workspace.id,
             }

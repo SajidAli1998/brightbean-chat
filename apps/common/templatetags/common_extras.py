@@ -274,3 +274,33 @@ def modal(parser: Parser, token: Token) -> ModalNode:
     nodelist = parser.parse(("endmodal",))
     parser.delete_first_token()
     return ModalNode(nodelist, modal_id, kwargs)
+
+
+class WorkspaceTitleNode(template.Node):
+    """Renders its body with "BrightBean Chat" swapped for the workspace's name."""
+
+    def __init__(self, nodelist: NodeList) -> None:
+        self.nodelist = nodelist
+
+    def render(self, context: Context) -> str:
+        title = self.nodelist.render(context)
+        name = getattr(context.get("current_workspace"), "name", "")
+        if not name:
+            return title
+        # The body is already-rendered (escaped) output, so the name going into
+        # it is escaped here to match.
+        return title.replace("BrightBean Chat", escape(name))
+
+
+@register.tag
+def workspace_title(parser: Parser, token: Token) -> WorkspaceTitleNode:
+    """``{% workspace_title %}…{% endworkspace_title %}`` — base.html's <title>.
+
+    Every page's title block ends in "BrightBean Chat". Inside a workspace the
+    tab should name the workspace instead, and rewriting the one place every
+    title passes through beats editing each block. Pages with no workspace —
+    the auth pages — keep the product name.
+    """
+    nodelist = parser.parse(("endworkspace_title",))
+    parser.delete_first_token()
+    return WorkspaceTitleNode(nodelist)

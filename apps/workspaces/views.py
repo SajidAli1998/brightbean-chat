@@ -11,7 +11,7 @@ from typing import Any
 from django.apps import apps
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
+from django.http import FileResponse, Http404, HttpResponse, HttpResponseBase
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -22,7 +22,8 @@ from apps.common.windows import is_valid_timezone, timezone_choices
 from apps.flows.portability.library import gallery_entries
 from apps.members.decorators import require_permission
 from apps.members.models import WorkspaceMembership
-from apps.members.requests import WorkspaceRequest
+from apps.members.requests import RBACRequest, WorkspaceRequest
+from apps.workspaces.logo import ACCEPT_ATTRIBUTE, LogoError, clear_logo, process_logo, set_logo
 from apps.workspaces.models import Workspace
 
 
@@ -326,7 +327,7 @@ def settings_view(request: WorkspaceRequest, workspace_id: str) -> HttpResponse:
     return render(
         request,
         "workspaces/settings.html",
-        {"timezone_choices": timezone_choices(request.workspace.timezone)},
+        {"timezone_choices": timezone_choices(request.workspace.timezone), "logo_accept": ACCEPT_ATTRIBUTE},
     )
 
 
@@ -348,6 +349,16 @@ def update_settings(request: WorkspaceRequest, workspace_id: str) -> HttpRespons
     if clash.exists():
         messages.error(request, "Another workspace in this organization already has that name.")
         return redirect(reverse("workspaces:settings", kwargs={"workspace_id": workspace_id}))
+    # Decoded up front and stored only once every other field has passed, so a
+    # bad timezone further down cannot leave a half-applied save behind.
+    new_logo = None
+    upload = request.FILES.get("logo")
+    if upload:
+        try:
+            new_logo = process_logo(upload)
+        except LogoError as exc:
+            messages.error(request, str(exc))
+            return redirect(reverse("workspaces:settings", kwargs={"workspace_id": workspace_id}))
     workspace.name = name
     workspace.icon = (request.POST.get("icon") or "").strip()[:8]
     workspace.description = (request.POST.get("description") or "").strip()[:500]
@@ -375,5 +386,48 @@ def update_settings(request: WorkspaceRequest, workspace_id: str) -> HttpRespons
     workspace.save(
         update_fields=["name", "icon", "description", "timezone", "primary_color", "secondary_color", "updated_at"]
     )
+    if new_logo is not None:
+        set_logo(workspace, new_logo)
     messages.success(request, "Workspace settings saved.")
     return redirect(reverse("workspaces:settings", kwargs={"workspace_id": workspace_id}))
+
+
+@login_required
+@require_permission("manage_workspace_settings")
+@require_POST
+def remove_logo(request: WorkspaceRequest, workspace_id: str) -> HttpResponse:
+    """Remove the logo at once — its own form, not a field the Save button carries."""
+    clear_logo(request.workspace)
+    messages.success(request, "Logo removed.")
+    return redirect(reverse("workspaces:settings", kwargs={"workspace_id": workspace_id}))
+
+
+@login_required
+@require_GET
+def logo(request: RBACRequest, logo_workspace_id: str) -> HttpResponseBase:
+    """Serve a workspace's logo to its members.
+
+    Mounted outside ``/w/`` with a kwarg that is deliberately not
+    ``workspace_id``: RBACMiddleware records ``last_workspace_id`` on every
+    request carrying that name, and the switcher draws every workspace's logo
+    on every page — so the old name would quietly move the user's "current"
+    workspace to whichever one was listed last. The membership check the
+    middleware would have made is made here instead, with the same 404.
+    """
+    membership = (
+        WorkspaceMembership.objects.filter(
+            user=request.user, workspace_id=logo_workspace_id, workspace__is_archived=False
+        )
+        .select_related("workspace")
+        .first()
+    )
+    if membership is None or not membership.workspace.logo:
+        raise Http404("No such logo.")
+    try:
+        handle = membership.workspace.logo.open("rb")
+    except (FileNotFoundError, OSError) as exc:
+        raise Http404("No such logo.") from exc
+    response = FileResponse(handle, content_type="image/png")
+    # The URL carries ?v=<file name>, and a new upload is a new name.
+    response["Cache-Control"] = "private, max-age=31536000, immutable"
+    return response

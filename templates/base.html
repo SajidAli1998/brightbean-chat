@@ -1,14 +1,20 @@
-{% load static %}<!DOCTYPE html>
+{% load static common_extras %}<!DOCTYPE html>
 <html lang="en" {% block html_style %}{% endblock %}>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}BrightBean Chat{% endblock %}</title>
+    <title>{% workspace_title %}{% block title %}BrightBean Chat{% endblock %}{% endworkspace_title %}</title>
 
+    {% comment %}A workspace with an uploaded logo uses it as the favicon too.{% endcomment %}
+    {% if current_workspace.logo_url %}
+    <link rel="icon" type="image/png" href="{{ current_workspace.logo_url }}">
+    <link rel="apple-touch-icon" href="{{ current_workspace.logo_url }}">
+    {% else %}
     <link rel="icon" type="image/svg+xml" href="{% static 'favicon/favicon.svg' %}">
     <link rel="icon" type="image/png" sizes="96x96" href="{% static 'favicon/favicon-96x96.png' %}">
     <link rel="shortcut icon" href="{% static 'favicon/favicon.ico' %}">
     <link rel="apple-touch-icon" sizes="180x180" href="{% static 'favicon/apple-touch-icon.png' %}">
+    {% endif %}
     <link rel="manifest" href="{% static 'favicon/site.webmanifest' %}">
 
     <link rel="stylesheet" href="{% static 'css/dist/styles.css' %}">

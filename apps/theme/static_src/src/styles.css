@@ -1099,6 +1099,44 @@ img.sidebar-logo-mark {
   width: 28px;
   height: 28px;
 }
+/* An uploaded workspace logo: a transparent-padded square, so no brand fill
+   behind it and never cropped. */
+.sidebar-logo-mark-image {
+  background: transparent;
+  object-fit: contain;
+}
+
+/* Workspace settings' logo field: a preview tile beside its two actions. The
+   tile shows the logo at a size you can judge it at, which the 30px sidebar
+   mark is not. */
+.logo-field { display: flex; align-items: center; gap: 16px; }
+.logo-field-preview {
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-tile);
+  background: var(--surface-sunken);
+}
+.logo-field-preview img { width: 100%; height: 100%; object-fit: contain; }
+.logo-field-empty { font-size: 1.5rem; font-weight: 700; color: var(--text-ghost); }
+.logo-field-body { min-width: 0; }
+.logo-field-body .field-hint { margin-top: 8px; }
+.logo-field-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+/* The file input is visually hidden behind its label, so the label carries
+   the keyboard focus ring the input would have drawn. */
+.logo-field-pick:has(+ input:focus-visible) {
+  outline: 2px solid var(--primary-ring);
+  outline-offset: 2px;
+}
+/* Doubled up because .btn-pill-secondary is defined further down and would
+   otherwise win on source order. */
+.btn-pill-secondary.logo-field-remove { color: var(--error-700); }
+.btn-pill-secondary.logo-field-remove:hover { border-color: var(--error-500); }
 /* ═══════════════════════════════════════════════════════════════
    SURFACES — the shared card, and the page furniture on top of it
    ═══════════════════════════════════════════════════════════════
