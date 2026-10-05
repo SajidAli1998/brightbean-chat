@@ -26,7 +26,7 @@ refuses what the view would refuse.
     <h1 class="page-title">Workspace settings</h1>
     <p class="page-lede mt-1.5 mb-6">What this workspace is called, and what clock it keeps.</p>
 
-    <form method="post" action="{% url 'workspaces:update_settings' workspace_id=request.workspace.id %}">
+    <form method="post" enctype="multipart/form-data" action="{% url 'workspaces:update_settings' workspace_id=request.workspace.id %}">
         {% csrf_token %}
 
         <section class="card p-6 mb-5">
@@ -35,10 +35,48 @@ refuses what the view would refuse.
                 <label class="field-label" for="ws-name">Name</label>
                 <input class="form-input-styled" id="ws-name" type="text" name="name" value="{{ request.workspace.name }}" maxlength="100" required>
             </div>
+            {% comment %}
+              Choosing a file previews it here and is saved with the rest of the
+              form. Remove is immediate: it submits #ws-remove-logo-form below
+              the main form, because forms cannot nest.
+            {% endcomment %}
+            <div class="field" x-data="{ preview: '', fileName: '' }">
+                <span class="field-label">Logo<span class="field-label-optional">optional</span></span>
+                <div class="logo-field">
+                    <div class="logo-field-preview">
+                        <img x-show="preview" x-cloak :src="preview" alt="">
+                        <template x-if="!preview">
+                            <span class="contents">
+                                {% if request.workspace.logo_url %}
+                                <img src="{{ request.workspace.logo_url }}" alt="Current logo">
+                                {% else %}
+                                <span class="logo-field-empty" aria-hidden="true">{% if request.workspace.icon %}{{ request.workspace.icon }}{% else %}{{ request.workspace.name|make_list|first|upper }}{% endif %}</span>
+                                {% endif %}
+                            </span>
+                        </template>
+                    </div>
+                    <div class="logo-field-body">
+                        <div class="logo-field-actions">
+                            <label class="btn-pill-secondary btn-pill-sm logo-field-pick" for="ws-logo">
+                                {% if request.workspace.logo %}Replace logo{% else %}Upload logo{% endif %}
+                            </label>
+                            <input class="sr-only" id="ws-logo" type="file" name="logo" accept="{{ logo_accept }}" x-ref="logoInput"
+                                   @change="const f = $event.target.files[0]; fileName = f ? f.name : ''; preview = f ? URL.createObjectURL(f) : ''">
+                            {% if request.workspace.logo %}
+                            <button type="submit" form="ws-remove-logo-form" class="btn-pill-secondary btn-pill-sm logo-field-remove" x-show="!fileName">Remove</button>
+                            {% endif %}
+                            <button type="button" class="btn-pill-secondary btn-pill-sm" x-show="fileName" x-cloak
+                                    @click="$refs.logoInput.value = ''; fileName = ''; preview = ''">Cancel</button>
+                        </div>
+                        <p class="field-hint" x-show="fileName" x-cloak><span x-text="fileName"></span> is ready. Save changes to use it.</p>
+                        <p class="field-hint" x-show="!fileName">PNG, JPEG, WebP or GIF, up to 2 MB. Square works best. It replaces the BrightBean mark and favicon on this workspace's pages.</p>
+                    </div>
+                </div>
+            </div>
             <div class="field">
                 <label class="field-label" for="ws-icon">Icon<span class="field-label-optional">optional</span></label>
                 <input class="form-input-styled" id="ws-icon" type="text" name="icon" value="{{ request.workspace.icon }}" maxlength="8" style="width: 5rem;">
-                <p class="field-hint">One emoji. It sits beside the name in the workspace switcher.</p>
+                <p class="field-hint">One emoji, used when there is no logo. It sits beside the name in the workspace switcher.</p>
             </div>
             <div class="field">
                 <label class="field-label" for="ws-description">Description<span class="field-label-optional">optional</span></label>
@@ -89,5 +127,10 @@ refuses what the view would refuse.
             <button type="submit" class="btn-pill-primary">Save changes</button>
         </div>
     </form>
+    {% if request.workspace.logo %}
+    <form id="ws-remove-logo-form" method="post" action="{% url 'workspaces:remove_logo' workspace_id=request.workspace.id %}">
+        {% csrf_token %}
+    </form>
+    {% endif %}
 </div>
 {% endblock %}

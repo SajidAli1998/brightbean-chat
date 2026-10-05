@@ -6,6 +6,7 @@ from django.urls import URLPattern, URLResolver, include, path
 
 from apps.accounts import views as account_views
 from apps.common import views
+from apps.workspaces import views as workspace_views
 
 # Sidebar destinations that no issue has built yet. Every one names the issue
 # that replaces it, and the nav entry does not change when that happens — the
@@ -133,6 +134,9 @@ urlpatterns = [
     # Per-user, so no workspace prefix: the bell shows every workspace at once
     # (issue #7).
     path("notifications/", include("apps.notifications.urls")),
+    # Outside /w/ on purpose: see apps.workspaces.views.logo for why its kwarg
+    # is not `workspace_id`. Membership is checked in the view.
+    path("workspace-logo/<uuid:logo_workspace_id>/", workspace_views.logo, name="workspace_logo"),
     # Workspace-scoped routes (SPEC §16). The kwarg name `workspace_id` is
     # RBACMiddleware's resolution contract; do not rename it.
     path("w/<uuid:workspace_id>/", include("apps.workspaces.urls")),

@@ -18,4 +18,5 @@ urlpatterns = [
     path("switch/", views.switch, name="switch"),
     path("settings/", views.settings_view, name="settings"),
     path("settings/update/", views.update_settings, name="update_settings"),
+    path("settings/logo/remove/", views.remove_logo, name="remove_logo"),
 ]
