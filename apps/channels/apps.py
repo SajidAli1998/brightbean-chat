@@ -34,6 +34,12 @@ class ChannelsConfig(AppConfig):
         # runs late (apps.channels.ingest.LATE_ORDER) rather than relying on
         # this app's position in INSTALLED_APPS, which is before messaging.
         register_preview()
+        # Messenger sender names, photos, locale and timezone — late on the
+        # seam for the same reason as the preview: it needs the identity
+        # persistence created.
+        from apps.channels.messenger_profile import register as register_messenger_profile
+
+        register_messenger_profile()
         # SPEC §6.6's STOP/HELP/START, at contract 6's hard_optout stage.
         register_sms_hooks()
         # The send_email runtime (#21). Contract 5's node registry is additive

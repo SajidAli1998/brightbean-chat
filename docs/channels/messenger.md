@@ -131,8 +131,30 @@ app's own header has to list it too. Issue #115.
 | `pages_manage_engagement` | Manage everything on your Page | Post the public reply and the like. |
 | `business_management` | Manage everything on your Page | Makes `/me/accounts` include pages owned by a business portfolio. Without it, a page you reach through the portfolio is picked in the dialog and still missing from the list. |
 
+| `pages_user_locale` | Engage with customers on Messenger from Meta | The sender's locale, for the contact's *Locale* field. |
+| `pages_user_timezone` | Engage with customers on Messenger from Meta | The sender's UTC offset, for the contact's *Timezone* field. |
+
 `pages_messaging` is not offered under the Page use case, which is why the app
 needs both.
+
+### Sender names and photos
+
+A Messenger webhook names its sender by PSID only. The first message from a new
+sender queues a background lookup (`apps/channels/messenger_profile.py`) that
+asks Meta's User Profile API for their first and last name, profile photo,
+locale and timezone. The contact's own fields are filled **only where blank**,
+so a name typed by an operator or brought in by an import is never overwritten.
+The timezone is stored as an `Etc/GMT±N` zone; a fractional offset is skipped.
+
+Two things in the Meta app make it work:
+
+- the **Business Asset User Profile Access** feature (Messenger use case →
+  Permissions and features) for the name and photo;
+- `pages_user_locale` and `pages_user_timezone` for locale and timezone. A page
+  connected before these were requested has to reconnect to grant them; until
+  then the lookup falls back to name and photo.
+
+Email and phone are not available: Meta does not share them over Messenger.
 
 ### App Review and Business Verification
 

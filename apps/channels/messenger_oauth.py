@@ -88,7 +88,9 @@ LOGIN_ROOT = "https://www.facebook.com"
 #: and posting the public reply or the like. ``business_management`` is what
 #: makes ``/me/accounts`` include a page owned by a business portfolio — without
 #: it an operator who reaches the page through the portfolio picks it in the
-#: dialog and still gets an empty list back.
+#: dialog and still gets an empty list back. ``pages_user_locale`` and
+#: ``pages_user_timezone`` let ``apps.channels.messenger_profile`` read a
+#: sender's locale and timezone along with their name.
 SCOPES: tuple[str, ...] = (
     "pages_messaging",
     "pages_show_list",
@@ -96,6 +98,8 @@ SCOPES: tuple[str, ...] = (
     "pages_read_engagement",
     "pages_manage_engagement",
     "business_management",
+    "pages_user_locale",
+    "pages_user_timezone",
 )
 
 #: The signer salt. Scopes the token to this flow: one minted here cannot be
