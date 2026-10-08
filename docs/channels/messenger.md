@@ -129,6 +129,7 @@ app's own header has to list it too. Issue #115.
 | `pages_manage_metadata` | Manage everything on your Page | Permits `subscribed_apps` and the Get Started button. Without it a page connects and then silently never delivers. |
 | `pages_read_engagement` | Manage everything on your Page | Read the comment that fires a comment trigger. |
 | `pages_manage_engagement` | Manage everything on your Page | Post the public reply and the like. |
+| `business_management` | Manage everything on your Page | Makes `/me/accounts` include pages owned by a business portfolio. Without it, a page you reach through the portfolio is picked in the dialog and still missing from the list. |
 
 `pages_messaging` is not offered under the Page use case, which is why the app
 needs both.

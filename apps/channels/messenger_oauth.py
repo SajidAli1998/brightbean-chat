@@ -85,13 +85,17 @@ LOGIN_ROOT = "https://www.facebook.com"
 #: ``pages_manage_metadata`` is what permits ``subscribed_apps`` and the Get
 #: Started button — without it a page connects and then silently never delivers.
 #: The two engagement scopes are SPEC §10's comment trigger: reading the comment
-#: and posting the public reply or the like.
+#: and posting the public reply or the like. ``business_management`` is what
+#: makes ``/me/accounts`` include a page owned by a business portfolio — without
+#: it an operator who reaches the page through the portfolio picks it in the
+#: dialog and still gets an empty list back.
 SCOPES: tuple[str, ...] = (
     "pages_messaging",
     "pages_show_list",
     "pages_manage_metadata",
     "pages_read_engagement",
     "pages_manage_engagement",
+    "business_management",
 )
 
 #: The signer salt. Scopes the token to this flow: one minted here cannot be
