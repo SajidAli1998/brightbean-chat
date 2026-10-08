@@ -49,16 +49,30 @@ inert — a button that looks fine and does nothing.
       </p>
     </div>
     {% if can_manage_crm %}
-      <div class="flex items-center gap-2 flex-shrink-0">
+      <div class="bb-split" x-data="{ choice: 'import', menuOpen: false }" @click.away="menuOpen = false"
+           @keydown.escape.window="menuOpen = false">
         {% comment %}
-          A plain link, and it carries the toolbar's canonical querystring, which
-          is what makes "export what you are looking at" true rather than
-          approximately true. It is regenerated on every rows render, so it
-          follows the filter.
+          Export follows the current list URL. Filtering updates that URL through
+          HX-Push-Url, so the download includes the contacts on screen.
         {% endcomment %}
-        <a class="btn-pill-secondary" id="contact-export"
-           href="{% url 'contacts:export' workspace_id=request.workspace.id %}{% if querystring %}?{{ querystring }}{% endif %}">Export</a>
-        <a class="btn-pill-primary" href="{% url 'contacts:import_list' workspace_id=request.workspace.id %}">Import a CSV</a>
+        <a class="bb-split-main" href="{% url 'contacts:import_list' workspace_id=request.workspace.id %}"
+           :href="choice === 'export' ? '{% url 'contacts:export' workspace_id=request.workspace.id %}' + window.location.search : '{% url 'contacts:import_list' workspace_id=request.workspace.id %}'"
+           :aria-label="choice === 'export' ? 'Export contacts' : 'Import contacts'"
+           :title="choice === 'export' ? 'Export contacts' : 'Import contacts'">
+          <svg x-show="choice === 'import'" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V8m0 0 4 4m-4-4-4 4M4 4v3h16V4"/></svg>
+          <svg x-show="choice === 'export'" x-cloak viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v3h16v-3"/></svg>
+        </a>
+        <button type="button" class="bb-split-toggle" @click="menuOpen = !menuOpen"
+                :aria-expanded="menuOpen ? 'true' : 'false'" aria-haspopup="true"
+                aria-label="Choose import or export" title="Choose import or export">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <div x-show="menuOpen" x-cloak class="bb-split-menu">
+          <button type="button" @click="choice = 'import'; menuOpen = false"
+                  :aria-current="choice === 'import' ? 'true' : null">Import contacts</button>
+          <button type="button" @click="choice = 'export'; menuOpen = false"
+                  :aria-current="choice === 'export' ? 'true' : null">Export contacts</button>
+        </div>
       </div>
     {% endif %}
   </div>

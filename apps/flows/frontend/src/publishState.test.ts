@@ -1,10 +1,4 @@
-/**
- * The label table.
- *
- * These are the cases that made the bug survive review: a reload onto an
- * already-published version reaches the toolbar through `load()`, not through
- * the publish handler, so testing publish-by-clicking never covered it.
- */
+/** Toolbar labels keep publication and trigger reachability separate from saves. */
 import { describe, expect, it } from "vitest";
 
 import { publishView } from "./publishState";
@@ -22,49 +16,56 @@ function save(patch: Partial<SaveSlice> = {}): SaveSlice {
 }
 
 describe("publishView", () => {
-  it("reads Live once the server says this version is published", () => {
-    const view = publishView(save({ version: version(2, true), publishedVersion: version(2, true) }), "active");
+  const published = save({ version: version(2, true), publishedVersion: version(2, true) });
 
-    expect(view.label).toBe("Live · v2");
-    expect(view.tone).toBe("success");
+  it("labels a published flow with enabled triggers and disables a repeat publish", () => {
+    const view = publishView(published, "active", 2, 1);
+
+    expect(view.statusLabel).toBe("Published");
     expect(view.publishDisabled).toBe(true);
     expect(view.publishLabel).toBe("Set live");
   });
 
-  it("offers Publish again the moment an edit is pending", () => {
-    const view = publishView(save({ state: "dirty", version: version(2, true), publishedVersion: version(2, true) }), "active");
+  it("calls out a published flow whose triggers are all off and offers to turn them on", () => {
+    const view = publishView(published, "active", 2, 0);
+
+    expect(view.statusLabel).toBe("Published · Triggers off");
+    expect(view.publishDisabled).toBe(false);
+    expect(view.publishLabel).toBe("Turn on triggers");
+  });
+
+  it("calls out a published flow with no triggers", () => {
+    const view = publishView(published, "active", 0, 0);
+
+    expect(view.statusLabel).toBe("Published · No triggers");
+    expect(view.publishDisabled).toBe(true);
+  });
+
+  it("offers Publish again as soon as an edit is pending", () => {
+    const view = publishView(save({ ...published, state: "dirty" }), "active", 2, 1);
 
     expect(view.publishDisabled).toBe(false);
-    expect(view.publishLabel).toBe("Set live");
+    expect(view.saveLabel).toBe("Unsaved changes");
   });
 
-  it("drops the version number while an edit is in flight, because the next save opens a new one", () => {
-    const view = publishView(save({ state: "dirty", version: version(2, true), publishedVersion: version(2, true) }), "active");
+  it("names a saved draft while still showing the published status", () => {
+    const view = publishView(save({ version: version(3, false), publishedVersion: version(2, true) }), "active", 2, 0);
 
-    expect(view.label).toBe("Unsaved changes");
-    expect(view.label).not.toContain("v2");
-    expect(view.liveChip).toBe("v2 live");
+    expect(view.statusLabel).toBe("Published · Triggers off");
+    expect(view.saveLabel).toBe("No changes · Draft v3");
   });
 
-  it("still names the draft beside the live one when they differ", () => {
-    const view = publishView(save({ version: version(3, false), publishedVersion: version(2, true) }), "active");
+  it("says Archived even when a published version exists", () => {
+    const view = publishView(published, "archived", 2, 1);
 
-    expect(view.label).toBe("No changes · Draft v3");
-    expect(view.liveChip).toBe("v2 live");
+    expect(view.statusLabel).toBe("Archived");
     expect(view.publishDisabled).toBe(false);
   });
 
-  it("says Archived even when a published version exists, and still offers Publish", () => {
-    // services.publish sets status back to ACTIVE, so publishing is how you
-    // un-archive. Disabling the button would remove the only route out.
-    const view = publishView(save({ version: version(2, true), publishedVersion: version(2, true) }), "archived");
+  it("uses Draft before publication", () => {
+    const view = publishView(save(), "draft");
 
-    expect(view.label).toBe("Archived");
-    expect(view.tone).toBe("warning");
-    expect(view.publishDisabled).toBe(false);
-  });
-
-  it("falls back to the save word alone before anything has loaded", () => {
-    expect(publishView(save(), undefined).label).toBe("No changes");
+    expect(view.statusLabel).toBe("Draft");
+    expect(view.saveLabel).toBe("No changes");
   });
 });

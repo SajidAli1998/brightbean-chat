@@ -13,16 +13,11 @@ says why this is not that.
 {% block content_wrap %}{% endblock %}
 
 {% block content %}
-<div class="max-w-[860px] w-full">
+<div class="max-w-[1060px] w-full">
     <div class="flex flex-wrap items-end justify-between gap-6 mb-6">
         <div>
             <h1 class="page-title">Labels</h1>
-            <p class="page-lede mt-1.5">
-                Labels file a conversation. They are the inbox's own filing system, and they are not
-                contact tags: a tag like "VIP" follows a person across every channel they use, while
-                a label like "waiting on shipping" is true of one thread and stops being true when
-                it is answered. Inbox rules can add labels automatically.
-            </p>
+            <p class="page-lede mt-1.5">Keep conversations organized. Rules can add labels automatically.</p>
         </div>
         <button type="button" class="btn-pill-primary flex-shrink-0" @click="$modal('new-label')">{% include "partials/_nav_icon.html" with name="tag" icon_size=16 %} New label</button>
     </div>

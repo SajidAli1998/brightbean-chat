@@ -1,21 +1,8 @@
 /**
- * The left column: what starts this flow, its steps, and the selected step's settings.
- *
- * This replaces the palette and the inspector, which were two panels either
- * side of the canvas doing one job between them — you picked a node type on the
- * left, it landed in the middle, and you configured it on the right, with your
- * eye crossing the window twice per step. Steps are added from the canvas now
- * (see AddStep), so the left column is the one place a step is read and edited.
- *
- * Three states, in order of what the reader needs:
- *
- * - **Nothing here yet** — no trigger and no steps. The column is the getting
- *   started path rather than an empty form.
- * - **Nothing selected** — the trigger, then the step list.
- * - **A step selected** — the trigger stays (it is the flow's first fact), then
- *   the step's own editor.
+ * The step list and selected step's settings, beneath the preview on the right.
+ * The persistent trigger summary is a separate left pane.
  */
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 import { configSchema } from "../schema/artifact";
 import { FieldProvider, type FieldContextValue } from "../inspector/FieldContext";
@@ -23,14 +10,14 @@ import { SchemaField } from "../inspector/SchemaField";
 import type { ConfigPath } from "../store/paths";
 import { useBuilder, useBuilderStore } from "../store/context";
 import { StepList } from "./StepList";
-import { TriggerSection } from "./TriggerSection";
 import { titleOf } from "./title";
 
 export function StepEditor() {
   const store = useBuilderStore();
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const editHeadRef = useRef<HTMLElement>(null);
   const selected = useBuilder((state) => state.selection.nodes);
   const stepCount = useBuilder((state) => state.nodeOrder.length);
-  const triggerCount = useBuilder((state) => state.triggers.length);
   const canEdit = useBuilder((state) => state.env.canEdit);
 
   const triggerSelected = useBuilder((state) => state.triggerSelected);
@@ -61,9 +48,17 @@ export function StepEditor() {
     };
   }, [nodeId, nodeType, canEdit, env, picklists, issues, store]);
 
+  useEffect(() => {
+    const body = bodyRef.current;
+    const head = editHeadRef.current;
+    if (nodeId && body && head) {
+      body.scrollTop += head.getBoundingClientRect().top - body.getBoundingClientRect().top;
+    }
+  }, [nodeId]);
+
   if (selected.length > 1) {
     return (
-      <aside className="fb-editor" aria-label="Step settings">
+      <section className="fb-editor" aria-label="Step settings">
         <div className="fb-editor-body">
           <p className="fb-empty">{selected.length} steps selected.</p>
           {canEdit ? (
@@ -76,25 +71,13 @@ export function StepEditor() {
             </button>
           ) : null}
         </div>
-      </aside>
+      </section>
     );
   }
 
   return (
-    <aside className="fb-editor" aria-label="Step settings">
-      <div className="fb-editor-body">
-        <TriggerSection />
-
-        {triggerCount === 0 && stepCount === 0 ? (
-          <section className="fb-editor-start">
-            <p className="fb-editor-start-title">Two things make a flow</p>
-            <p className="fb-editor-start-body">
-              Something that starts it, and something it does. Choose what starts it above, then add
-              your first step on the canvas.
-            </p>
-          </section>
-        ) : null}
-
+    <section className="fb-editor" aria-label="Step settings">
+      <div className="fb-editor-body" ref={bodyRef}>
         {stepCount > 0 ? (
           <section className="fb-editor-section">
             <p className="fb-section-label">Steps</p>
@@ -111,7 +94,7 @@ export function StepEditor() {
                 it — so the editor read as a seventh row that started counting
                 again at one. "Editing step 4" is the whole fix: the number
                 stops being a duplicate the moment something says it is the same
-                step. The orange circle and the eyebrow go with it, because the
+                step. The numbered circle and the eyebrow go with it, because the
                 caption now carries the identity and the row above still carries
                 the kind.
 
@@ -119,7 +102,7 @@ export function StepEditor() {
                 the list is on screen, and a send_message form scrolls well past
                 it. The title wraps rather than truncating: it is the thing
                 being worked on, and it was being cut twice at two widths. */}
-            <header className="fb-edit-head">
+            <header className="fb-edit-head" ref={editHeadRef}>
               <span className="fb-edit-caption">
                 {index >= 0 ? `Editing step ${index + 1}` : "Editing this step"}
               </span>
@@ -156,18 +139,14 @@ export function StepEditor() {
             ) : null}
           </section>
         ) : triggerSelected ? (
-          // The trigger card on the canvas is selected. Its own panel is at the
-          // top of this column and is highlighted; saying so beats leaving the
-          // column looking like nothing was clicked.
-          <p className="fb-empty mt-3">
-            What starts this flow is at the top of this column. Open it to change the words it
-            watches for, or which account it watches.
-          </p>
+          // The trigger card on the canvas is selected. Point to the controls
+          // in the left sidebar so the selection has a clear next step.
+          <p className="fb-empty mt-3">What starts this flow is in “When it runs” on the left.</p>
         ) : stepCount > 0 ? (
           <p className="fb-empty mt-3">Pick a step above, or on the canvas, to change what it says.</p>
         ) : null}
       </div>
-    </aside>
+    </section>
   );
 }
 

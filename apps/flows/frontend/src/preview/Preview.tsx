@@ -42,7 +42,7 @@ export function Preview() {
   const config = useBuilder((state) => (nodeId ? state.config[nodeId] : undefined));
 
   return (
-    <aside className="fb-preview" aria-label="Preview">
+    <section className="fb-preview" aria-label="Preview">
       <p className="fb-section-label">Preview</p>
       <div className="fb-phone">
         <div className="fb-phone-screen">
@@ -57,7 +57,7 @@ export function Preview() {
         Placeholders like <code>{"{{ first_name }}"}</code> are filled in when the message is actually
         sent.
       </p>
-    </aside>
+    </section>
   );
 }
 

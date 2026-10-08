@@ -74,7 +74,7 @@ this issue), so nothing here reaches a CDN.
                     <td class="an-num">{{ row.delivered }}</td>
                     <td class="an-num">{{ row.failed }}</td>
                     <td class="an-num">{{ row.clicked }}</td>
-                    <td class="an-num">{% if row.ctr is not None %}{{ row.ctr }}%{% else %}<span class="an-muted">—</span>{% endif %}</td>
+                    <td class="an-num">{% if row.ctr is not None %}{{ row.ctr }}%{% else %}<span class="an-muted">N/A</span>{% endif %}</td>
                 </tr>
                 {% endfor %}
             </tbody>

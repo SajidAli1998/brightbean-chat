@@ -358,7 +358,7 @@ def _connect_page(request: WorkspaceRequest, page: messenger_oauth.MetaPage) -> 
         logger.info("Messenger connect: the Get Started button could not be set for %s.", connection.pk)
         messages.warning(
             request,
-            f"Connected {connection.display_name}, but the Get Started button could not be configured — "
+            f"Connected {connection.display_name}, but the Get Started button could not be configured. "
             f"the welcome trigger will not fire until it is. See docs/channels/messenger.md.",
         )
         return ""

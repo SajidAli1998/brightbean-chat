@@ -13,9 +13,10 @@ from django.test import Client
 from django.urls import reverse
 
 from apps.flows.fixtures import graph_for
-from apps.flows.models import FlowVersion
+from apps.flows.models import FlowVersion, Trigger
 from apps.flows.schema import empty_graph, json_schema
 from apps.flows.services import archive_flow, create_flow, latest_version, publish, save_draft
+from apps.flows.triggers.types import TriggerType
 from apps.members.roles import WorkspaceRole
 
 pytestmark = pytest.mark.django_db
@@ -188,6 +189,26 @@ class TestSave:
 
 
 class TestPublishEndpoint:
+    def test_it_reports_triggers_enabled_by_publishing(self, tenancy, client_for, flow):
+        save_draft(flow, graph_for("send_message"), user=tenancy.owner)
+        trigger = Trigger.objects.create(
+            workspace=tenancy.workspace,
+            flow=flow,
+            type=TriggerType.API,
+            config_json={},
+            enabled=False,
+        )
+
+        response = client_for(tenancy.owner).post(publish_url(tenancy, flow))
+
+        assert response.status_code == 200
+        assert response.json()["triggers"][0]["enabled"] is True
+        assert "flow_triggers_all_disabled" not in {
+            issue["code"] for issue in response.json()["validation"]["warnings"]
+        }
+        trigger.refresh_from_db()
+        assert trigger.enabled is True
+
     def test_it_publishes_a_valid_draft(self, tenancy, client_for, flow):
         save_draft(flow, graph_for("send_message"), user=tenancy.owner)
 
@@ -196,6 +217,7 @@ class TestPublishEndpoint:
         assert response.status_code == 200
         assert response.json()["version"]["published"] is True
         assert response.json()["flow"]["status"] == "active"
+        assert response.json()["triggers"] == []
 
     def test_errors_answer_422_with_the_same_shape_the_save_returns(self, tenancy, client_for, flow):
         response = client_for(tenancy.owner).post(publish_url(tenancy, flow))

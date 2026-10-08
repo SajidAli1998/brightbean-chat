@@ -304,7 +304,7 @@ def flow_create(request: WorkspaceRequest, workspace_id: str) -> HttpResponse:
     return toast_response(
         tone="success",
         title="Flow created",
-        body=f"{flow.name} starts with a first message — open it to edit.",
+        body=f"{flow.name} starts with a first message. Open it to edit.",
         events={"flowsChanged": True},
     )
 

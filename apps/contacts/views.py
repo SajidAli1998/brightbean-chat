@@ -877,7 +877,7 @@ def bulk_tag(request: WorkspaceRequest, workspace_id: str) -> HttpResponse:
     verb = "removed from" if removing else "added to"
     return _bulk_result(
         f"Tag {verb} {touched} contact{'' if touched == 1 else 's'}",
-        f"{tag.name} — {len(contacts)} selected.",
+        f"{tag.name}: {len(contacts)} selected.",
     )
 
 
@@ -1459,7 +1459,7 @@ def tag_delete(request: WorkspaceRequest, workspace_id: str, tag_id: str) -> Htt
     return toast_response(
         tone="success",
         title="Tag deleted",
-        body=f"{name} — removed from {removed} contact{'' if removed == 1 else 's'}.",
+        body=f"{name} removed from {removed} contact{'' if removed == 1 else 's'}.",
         events={"tagsChanged": True},
     )
 
@@ -1544,7 +1544,7 @@ def field_delete(request: WorkspaceRequest, workspace_id: str, field_id: str) ->
     return toast_response(
         tone="success",
         title="Field deleted",
-        body=f"{name} — {removed} stored value{'' if removed == 1 else 's'} removed.",
+        body=f"{name}: {removed} stored value{'' if removed == 1 else 's'} removed.",
         events={"fieldsChanged": True},
     )
 
@@ -1703,8 +1703,8 @@ def bulk_erase(request: WorkspaceRequest, workspace_id: str) -> HttpResponse:
     body = "They are hidden everywhere already. Their messages, identities and consent records are being removed."
     if untouched:
         body += (
-            f" {untouched} of the {named} selected {'was' if untouched == 1 else 'were'} not touched — "
-            f"already deleted, already being erased, or not in this workspace."
+            f" {untouched} of the {named} selected {'was' if untouched == 1 else 'were'} not touched. "
+            f"They were already deleted, being erased, or outside this workspace."
         )
     return _bulk_result(
         f"Erasing {started} contact{'' if started == 1 else 's'}",
