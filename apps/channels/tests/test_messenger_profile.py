@@ -230,3 +230,70 @@ def messenger_support_call(request: httpx.Request) -> Any:
         params=dict(request.url.params),
         authorization=request.headers.get("Authorization", ""),
     )
+
+
+class TestInstagramSenders:
+    """The same lookup for an Instagram sender, on whichever host the token belongs to."""
+
+    IG_PROFILE = {
+        "name": "All Things Rugby",
+        "username": "allthingsrugbygram",
+        "profile_pic": "https://scontent.cdninstagram.com/pic.jpg",
+        "id": "1109594174981821",
+    }
+
+    def _connection(self, tenancy: Any, *, facebook: bool) -> ChannelConnection:
+        from apps.channels import instagram_oauth
+        from apps.common.platforms import Platform
+
+        credentials: dict[str, Any] = {instagram_oauth.TOKEN_KEY: "ig-token"}
+        if facebook:
+            credentials[instagram_oauth.LOGIN_KEY] = instagram_oauth.FACEBOOK_LOGIN
+        connection = ChannelConnection(
+            workspace=tenancy.workspace,
+            platform=Platform.INSTAGRAM.value,
+            display_name="@allthingsrugbygram",
+            external_id="17841400000000001",
+        )
+        connection.credentials = credentials  # type: ignore[assignment]
+        connection.save()
+        return connection
+
+    def _run(self, connection: ChannelConnection, igsid: str) -> tuple[Any, list[str]]:
+        from apps.channels.tests import instagram_support
+
+        hosts: list[str] = []
+
+        def configure(api: Any) -> None:
+            api.reply(igsid, instagram_support.Reply(body=self.IG_PROFILE))
+            original = api.handle
+
+            def handle(request: httpx.Request) -> httpx.Response:
+                hosts.append(request.url.host)
+                return original(request)
+
+            api.handle = handle
+
+        resolve_identity(connection, igsid)
+        messenger_profile.profile_events(connection, [_event(connection, psid=igsid)])
+        (action,) = _actions(connection)
+        with instagram_support.fake_graph(configure) as api:
+            messenger_profile.fetch_profile(action.payload, action)
+        return api, hosts
+
+    @pytest.mark.parametrize(("facebook", "host"), [(True, "graph.facebook.com"), (False, "graph.instagram.com")])
+    def test_the_name_username_and_photo_are_filled_in(self, tenancy: Any, facebook: bool, host: str) -> None:
+        igsid = "1109594174981821"
+        connection = self._connection(tenancy, facebook=facebook)
+        api, hosts = self._run(connection, igsid)
+
+        assert api.paths() == [igsid]
+        assert hosts == [host]
+        assert api.calls and api.tokens == ["Bearer ig-token"]
+        identity = resolve_identity(connection, igsid).identity
+        identity.refresh_from_db()
+        contact = identity.contact
+        contact.refresh_from_db()
+        assert (contact.first_name, contact.last_name) == ("All", "Things Rugby")
+        assert identity.extra["username"] == "allthingsrugbygram"
+        assert identity.extra["profile_pic_url"] == self.IG_PROFILE["profile_pic"]

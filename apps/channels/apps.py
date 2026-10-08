@@ -34,7 +34,7 @@ class ChannelsConfig(AppConfig):
         # runs late (apps.channels.ingest.LATE_ORDER) rather than relying on
         # this app's position in INSTALLED_APPS, which is before messaging.
         register_preview()
-        # Messenger sender names, photos, locale and timezone — late on the
+        # Messenger and Instagram sender names and photos — late on the
         # seam for the same reason as the preview: it needs the identity
         # persistence created.
         from apps.channels.messenger_profile import register as register_messenger_profile

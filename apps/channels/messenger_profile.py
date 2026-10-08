@@ -1,4 +1,4 @@
-"""Messenger sender profiles: the name, photo, locale and timezone Meta holds.
+"""Messenger and Instagram sender profiles: the name, photo, locale and timezone Meta holds.
 
 A Messenger webhook names its sender by PSID and nothing else — unlike
 Telegram, whose updates carry ``first_name``, or WhatsApp, whose carry
@@ -27,6 +27,13 @@ Meta gates the fields separately. ``first_name``, ``last_name`` and
 ``pages_user_timezone``, which a page granted before those scopes were
 requested does not have. A refusal of the full field list is therefore retried
 once with the basic fields, so a page that has not reconnected still gets names.
+
+Instagram has the same gap — its webhooks carry an IGSID and nothing else — and
+the same remedy: ``GET /<IGSID>?fields=name,username,profile_pic`` with the
+connection's own token, on whichever host that token belongs to
+(``providers.instagram.api_root``). Instagram returns one ``name`` rather than
+first and last, so it is split on the first space; ``username`` is kept on the
+identity, and there is no locale or timezone to read.
 """
 
 import logging
@@ -53,7 +60,14 @@ BASIC_FIELDS = "first_name,last_name,profile_pic"
 #: what stops every later message from queueing another lookup.
 FETCHED_KEY = "profile_fetched_at"
 
-#: Events whose ``platform_user_id`` is a PSID. A comment's author id is not —
+#: The platforms whose senders this module looks up.
+PROFILE_PLATFORMS = frozenset({Platform.MESSENGER.value, Platform.INSTAGRAM.value})
+
+#: What Instagram's User Profile API is asked for.
+INSTAGRAM_FIELDS = "name,username,profile_pic"
+MAX_USERNAME_CHARS = 100
+
+#: Events whose ``platform_user_id`` is a PSID (or, on Instagram, an IGSID). A comment's author id is not —
 #: it is not addressable through the User Profile API.
 PROFILE_EVENTS = frozenset({EventType.MESSAGE, EventType.POSTBACK, EventType.REFERRAL})
 
@@ -82,7 +96,7 @@ def profile_events(connection: ChannelConnection, events: Sequence[NormalizedEve
     batch — the same trade ``apps.messaging.ingest._record_display_fields``
     refuses to make.
     """
-    if connection.platform != Platform.MESSENGER:
+    if connection.platform not in PROFILE_PLATFORMS:
         return
     psids = {event.platform_user_id for event in events if event.type in PROFILE_EVENTS and event.platform_user_id}
     if not psids:
@@ -90,7 +104,7 @@ def profile_events(connection: ChannelConnection, events: Sequence[NormalizedEve
     try:
         _queue_lookups(connection, psids)
     except Exception:
-        logger.exception("Could not queue Messenger profile lookups on connection %s.", connection.pk)
+        logger.exception("Could not queue profile lookups on connection %s.", connection.pk)
 
 
 def _queue_lookups(connection: ChannelConnection, psids: set[str]) -> None:
@@ -126,6 +140,7 @@ def fetch_profile(payload: dict[str, Any], action: Any) -> None:
     other refusal is logged and the row finishes, so a page missing a permission
     does not burn three attempts per contact.
     """
+    from apps.channels.instagram_oauth import access_token
     from apps.channels.providers.exceptions import APIError
     from apps.channels.providers.messenger import page_token
     from apps.messaging.models import ContactChannelIdentity
@@ -146,16 +161,18 @@ def fetch_profile(payload: dict[str, Any], action: Any) -> None:
     # a path built from anything but digits is not one this module will send.
     if not psid.isdigit():
         return
-    token = page_token(identity.channel_connection)
+    connection = identity.channel_connection
+    instagram = connection.platform == Platform.INSTAGRAM.value
+    token = access_token(connection) if instagram else page_token(connection)
     if not token:
         return
 
     try:
-        body = _lookup(token, psid)
+        body = _instagram_lookup(connection, token, psid) if instagram else _lookup(token, psid)
     except APIError as exc:
         if exc.status_code == 429 or (exc.status_code or 0) >= 500:
             raise
-        logger.info("Meta refused a Messenger profile lookup for identity %s (code %s).", identity.pk, exc.code)
+        logger.info("Meta refused a profile lookup for identity %s (code %s).", identity.pk, exc.code)
         return
     apply_profile(identity, body)
 
@@ -174,6 +191,29 @@ def _lookup(token: str, psid: str) -> dict[str, Any]:
     return graph_call(token, "GET", psid, params={"fields": BASIC_FIELDS}, timeout=BACKGROUND_TIMEOUT)
 
 
+def _instagram_lookup(connection: ChannelConnection, token: str, igsid: str) -> dict[str, Any]:
+    """Instagram's User Profile API call, reshaped to the fields :func:`apply_profile` reads."""
+    from apps.channels.providers.base import BACKGROUND_TIMEOUT
+    from apps.channels.providers.instagram import api_root, call
+
+    body = call(
+        token,
+        igsid,
+        method="GET",
+        params={"fields": INSTAGRAM_FIELDS},
+        timeout=BACKGROUND_TIMEOUT,
+        root=api_root(connection),
+    )
+    name = body.get("name")
+    first, _, last = name.strip().partition(" ") if isinstance(name, str) else ("", "", "")
+    return {
+        "first_name": first,
+        "last_name": last.strip(),
+        "profile_pic": body.get("profile_pic"),
+        "username": body.get("username"),
+    }
+
+
 def apply_profile(identity: Any, body: dict[str, Any]) -> None:
     """Write a profile onto the identity, and into the contact's blank columns."""
     from apps.contacts.services import update_contact
@@ -182,12 +222,14 @@ def apply_profile(identity: Any, body: dict[str, Any]) -> None:
     values["timezone"] = etc_zone(body.get("timezone"))
     picture = body.get("profile_pic")
     picture = picture if isinstance(picture, str) and picture.startswith("https://") else ""
+    username = _clean(body.get("username"), MAX_USERNAME_CHARS)
 
     stored = identity.extra if isinstance(identity.extra, dict) else {}
     identity.extra = {
         **stored,
         **{name: value for name, value in values.items() if value},
         **({"profile_pic_url": picture} if picture else {}),
+        **({"username": username} if username else {}),
         FETCHED_KEY: timezone.now().isoformat(),
     }
     identity.save(update_fields=["extra", "updated_at"])
