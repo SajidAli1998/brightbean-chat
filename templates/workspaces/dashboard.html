@@ -23,7 +23,6 @@ goes.
     <div class="flex flex-wrap items-end justify-between gap-6 mb-7">
         <div>
             <h1 class="page-title">{{ greeting }}, {{ request.user.display_name }}</h1>
-            <p class="page-lede mt-1.5">{{ request.workspace.name }}. Your role here: {{ request.workspace_membership.get_workspace_role_display|lower }}.</p>
         </div>
         {% if can_edit_flows %}
         <a class="btn-pill-primary flex-shrink-0" href="{% url 'flows:list' workspace_id=request.workspace.id %}">

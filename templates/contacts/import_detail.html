@@ -55,7 +55,7 @@ whichever one it saw last — importing data from a column nobody chose.
             <tr>
               <td>{{ column.name|default:"(unnamed)" }}</td>
               <td class="muted text-xs">
-                {% for sample in column.samples %}{{ sample|truncatechars:40 }}{% if not forloop.last %} · {% endif %}{% empty %}—{% endfor %}
+                {% for sample in column.samples %}{{ sample|truncatechars:40 }}{% if not forloop.last %} · {% endif %}{% empty %}None{% endfor %}
               </td>
               <td>
                 <label class="sr-only" for="column-{{ column.index }}">Import column {{ column.name }} as</label>

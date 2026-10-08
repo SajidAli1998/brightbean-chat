@@ -61,7 +61,7 @@ export function ConditionKeySelect(props: FieldProps) {
       </select>
       {options.length === 0 ? (
         <p className="fb-field-help">
-          Nothing to choose from yet — create one first, then come back to this rule.
+          Nothing to choose yet. Create one, then return to this rule.
         </p>
       ) : null}
     </FieldShell>

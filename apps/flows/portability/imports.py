@@ -573,7 +573,7 @@ def _notes(document: dict[str, Any], resolutions: list[Resolution] | None = None
         if requirement.kind == "platform" and resolution.action == ACTION_BLANK and not resolution.problem:
             notes.append(
                 f"The {_platform_label(requirement.key)} triggers will listen on every account their kind works "
-                f"on, not only {requirement.key} — that is what leaving the channel open means. "
+                f"on, including channels beyond {requirement.key}. "
                 f"Pick an account to keep them where the file had them."
             )
         if requirement.kind == refs.KIND_COMMENT_POSTS and not _post_ids(resolution.literal):
@@ -666,7 +666,7 @@ def _resolve(workspace: Any, requirement: Requirement, answer: dict[str, Any]) -
 
     if resolution.action == ACTION_BLANK:
         if not requirement.optional:
-            resolution.problem = f"This {noun} has to be supplied — the flow cannot run without it."
+            resolution.problem = f"This {noun} is required for the flow to run."
             return resolution
         resolution.literal = str(answer.get("value") or "")
         return resolution
@@ -731,7 +731,7 @@ def _resolve_create(
     if requirement.kind != refs.KIND_TAG:
         taken = _find_by_name(workspace, Requirement(kind=requirement.kind, key="", name=resolution.name))
         if taken is not None:
-            resolution.problem = f"A {noun} called “{resolution.name}” already exists — use the existing one instead."
+            resolution.problem = f"A {noun} called “{resolution.name}” already exists. Use the existing one instead."
             return resolution
 
     if requirement.kind == refs.KIND_CUSTOM_FIELD:

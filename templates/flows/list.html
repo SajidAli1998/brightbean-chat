@@ -54,7 +54,9 @@ swap in styles.css meaningful.
         {% if can_edit %}
         <div class="flex items-center gap-2 flex-shrink-0">
             <a href="{% url 'flows:import_start' workspace_id=request.workspace.id %}"
-               class="btn-pill-secondary">Import a file</a>
+               class="bb-icon-action" aria-label="Import a flow" title="Import a flow">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V8m0 0 4 4m-4-4-4 4M4 4v3h16V4"/></svg>
+            </a>
             <button type="button" class="btn-pill-primary" @click="$modal('new-flow')">
                 {% include "partials/_nav_icon.html" with name="flows" icon_size=16 %} New flow
             </button>

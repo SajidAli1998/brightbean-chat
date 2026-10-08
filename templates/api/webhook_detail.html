@@ -78,7 +78,7 @@
               {{ delivery.get_status_display }}
               {% if delivery.error %}<br /><span class="muted">{{ delivery.error }}</span>{% endif %}
             </td>
-            <td>{{ delivery.response_code|default:"—" }}</td>
+            <td>{{ delivery.response_code|default:"N/A" }}</td>
             <td>{{ delivery.duration_ms }} ms</td>
             <td>{{ delivery.attempt }}</td>
           </tr>

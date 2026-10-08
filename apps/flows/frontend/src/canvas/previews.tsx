@@ -38,7 +38,7 @@ function Pills({ items, quick = false }: { items: string[]; quick?: boolean }) {
     <div className="flex flex-wrap gap-1 mt-1">
       {shown.map((label, index) => (
         <span key={index} className={quick ? "fb-pill fb-pill-quick" : "fb-pill"}>
-          {label || "—"}
+          {label || "Untitled"}
         </span>
       ))}
       {items.length > shown.length ? <span className="fb-pill">+{items.length - shown.length}</span> : null}

@@ -273,7 +273,7 @@ def describe(trigger: Trigger) -> str:
         shown = ", ".join(words[:3])
         return shown if len(words) <= 3 else f"{shown} and {len(words) - 3} more"
     if trigger.type == TriggerType.REF_URL:
-        return f"Reference “{config.get('ref') or '—'}”"
+        return f"Reference “{config.get('ref') or 'None'}”"
     if trigger.type == TriggerType.COMMENT:
         return _describe_comment(config)
     spec = spec_for(trigger.type)

@@ -112,7 +112,7 @@ flow builder's overlay shows.
         </div>
         <div class="bc-tile">
             {# Blank rather than 0%: a rate with no denominator is not a rate. #}
-            <div class="bc-tile-figure">{% if deliverability.delivery_rate is not None %}{{ deliverability.delivery_rate }}%{% else %}—{% endif %}</div>
+            <div class="bc-tile-figure">{% if deliverability.delivery_rate is not None %}{{ deliverability.delivery_rate }}%{% else %}N/A{% endif %}</div>
             <div class="bc-tile-label">Delivered</div>
         </div>
     </div>

@@ -1,5 +1,5 @@
 /**
- * The island's shell: load once, then step editor / canvas / preview.
+ * The island's shell: load once, then triggers / canvas / preview and steps.
  *
  * Autosave is installed only when the page says this member may edit. Not
  * disabled inside — never installed, so there is no subscription and no timer
@@ -13,6 +13,7 @@ import { ApiError } from "./api/client";
 import { loadFlow } from "./api/flows";
 import { Canvas } from "./canvas/Canvas";
 import { StepEditor } from "./editor/StepEditor";
+import { TriggerSidebar } from "./editor/TriggerSidebar";
 import type { BuilderEnv } from "./env";
 import { Preview } from "./preview/Preview";
 import { installAutosave, type Autosave } from "./persistence/autosave";
@@ -167,13 +168,15 @@ function Shell() {
   return (
     <>
       <Toolbar autosave={autosave} />
-      {/* Three columns, not four panels. The palette and the inspector were one
-          job split either side of the canvas; they are the left column now, and
-          steps are added from the canvas itself. */}
+      {/* Triggers stay visible to the left of the canvas; the step list and
+          settings sit below the preview on the right. */}
       <div className="fb-shell">
-        <StepEditor />
+        <TriggerSidebar />
         <Canvas />
-        <Preview />
+        <aside className="fb-right-sidebar" aria-label="Preview and steps">
+          <Preview />
+          <StepEditor />
+        </aside>
       </div>
       <ProblemsRail />
     </>

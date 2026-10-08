@@ -202,7 +202,7 @@ def webhook_test(request: WorkspaceRequest, workspace_id: str, webhook_id: str) 
     webhook = _webhook_or_404(request, webhook_id)
     delivery = send_test_event(webhook)
     if delivery.succeeded:
-        messages.success(request, f"Test delivered — the endpoint answered {delivery.response_code}.")
+        messages.success(request, f"Test delivered. The endpoint answered {delivery.response_code}.")
     else:
         messages.error(request, f"Test failed: {delivery.error or delivery.status}.")
     return redirect(_detail_url(workspace_id, webhook.pk))

@@ -118,8 +118,8 @@ PREVIEW_PLATFORMS: frozenset[str] = frozenset(PREVIEW_LINKS)
 #: first message the tester actually sends. Without saying so, people report a
 #: working link as broken.
 PREVIEW_INSTRUCTIONS: dict[str, str] = {
-    Platform.MESSENGER: "Send any message once the chat opens — that first message is what starts the test.",
-    Platform.INSTAGRAM: "Send any message once the chat opens — that first message is what starts the test.",
+    Platform.MESSENGER: "Send a message after the chat opens to start the test.",
+    Platform.INSTAGRAM: "Send a message after the chat opens to start the test.",
 }
 
 

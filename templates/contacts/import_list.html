@@ -51,14 +51,14 @@ so there is a record that the person who imported the list was told.
       <tbody>
         {% for run in runs %}
           <tr>
-            <td>{{ run.original_filename|default:"—" }}<br><span class="muted text-xs">{{ run.created_at }}</span></td>
+            <td>{{ run.original_filename|default:"Unknown file" }}<br><span class="muted text-xs">{{ run.created_at }}</span></td>
             <td><span class="status-pill status-pill-{% if run.status == 'done' %}active{% elif run.status == 'failed' %}disabled{% else %}needs_reauth{% endif %}">{{ run.get_status_display }}</span></td>
             <td>{{ run.processed_rows }}{% if run.total_rows %} / {{ run.total_rows }}{% endif %}</td>
             <td class="text-xs">
               {{ run.created_count }} created · {{ run.updated_count }} updated ·
               {{ run.skipped_count }} skipped · {{ run.error_count }} error{{ run.error_count|pluralize }}
             </td>
-            <td class="text-xs">{{ run.created_by.email|default:"—" }}</td>
+            <td class="text-xs">{{ run.created_by.email|default:"Unknown" }}</td>
             <td><a href="{% url 'contacts:import_detail' workspace_id=request.workspace.id import_id=run.id %}">Open</a></td>
           </tr>
         {% endfor %}
