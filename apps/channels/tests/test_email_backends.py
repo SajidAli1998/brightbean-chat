@@ -52,13 +52,13 @@ def envelope(**overrides: Any) -> Envelope:
 
 
 class TestProviderResolution:
-    @pytest.mark.parametrize("value", ["smtp", "resend", "ses"])
+    @pytest.mark.parametrize("value", ["smtp", "resend", "ses", "postmark"])
     def test_a_known_provider_is_kept(self, value: str) -> None:
         assert email_backends.provider_for(Connection({"provider": value})) == value
 
     @pytest.mark.parametrize("value", ["", "SMTP ", None, 7, "carrier-pigeon", {"nested": 1}])
     def test_anything_else_falls_back_to_smtp(self, value: Any) -> None:
-        """The value is interpolated into a URL, so it can only ever be one of three."""
+        """The value is interpolated into a URL, so it can only ever be one of ours."""
         resolved = email_backends.provider_for(Connection({"provider": value}))
         assert resolved in email_backends.PROVIDERS
 
@@ -338,6 +338,61 @@ class TestResend:
         email_backends.verify_credentials(Connection({"provider": "resend", "api_key": "re_key"}))
         assert seen[0].url.path == "/domains"
         assert seen[0].method == "GET"
+
+
+class TestPostmark:
+    TOKEN = "00000000-1111-2222-3333-444444444444"  # noqa: S105 - a fake credential for tests
+
+    def _connection(self, **extra: Any) -> Connection:
+        return Connection(
+            {"provider": "postmark", "server_token": self.TOKEN, "from_address": "hello@sender.test", **extra}
+        )
+
+    def test_a_send_round_trips_with_our_headers(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        seen: list[Any] = []
+        client = resend_transport(body={"MessageID": "pm-msg-1", "ErrorCode": 0}, record=seen)
+        monkeypatch.setattr(email_backends, "request_json", _through(client))
+
+        assert email_backends.deliver(self._connection(), envelope()) == "pm-msg-1"
+
+        request = seen[0]
+        assert request.url.host == "api.postmarkapp.com"
+        assert request.url.path == "/email"
+        assert request.headers["X-Postmark-Server-Token"] == self.TOKEN
+        assert self.TOKEN not in str(request.url)
+        body = _json_body(request)
+        assert body["To"] == "reader@example.test"
+        assert body["Subject"] == "Subject line"
+        assert body["HtmlBody"] and body["TextBody"]
+        assert body["MessageStream"] == "outbound"
+        headers = {item["Name"]: item["Value"] for item in body["Headers"]}
+        assert headers["List-Unsubscribe"] == f"<{UNSUBSCRIBE}>"
+        assert headers["List-Unsubscribe-Post"] == "List-Unsubscribe=One-Click"
+
+    def test_the_chosen_stream_is_used(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        seen: list[Any] = []
+        client = resend_transport(body={"MessageID": "pm-msg-2"}, record=seen)
+        monkeypatch.setattr(email_backends, "request_json", _through(client))
+        email_backends.deliver(self._connection(message_stream="broadcast"), envelope())
+        assert _json_body(seen[0])["MessageStream"] == "broadcast"
+
+    def test_a_422_is_permanent(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        client = resend_transport(status=422, body={"ErrorCode": 400, "Message": "Sender signature not found"})
+        monkeypatch.setattr(email_backends, "request_json", _through(client))
+        with pytest.raises(APIError) as caught:
+            email_backends.deliver(self._connection(), envelope())
+        assert caught.value.status_code == 422
+
+    def test_no_token_is_refused_before_a_call(self) -> None:
+        with pytest.raises(APIError, match="no Postmark server token"):
+            email_backends.deliver(Connection({"provider": "postmark"}), envelope())
+
+    def test_verify_reads_the_server(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        seen: list[Any] = []
+        client = resend_transport(body={"ID": 1, "Name": "ATR"}, record=seen)
+        monkeypatch.setattr(email_backends, "request_json", _through(client))
+        email_backends.verify_credentials(self._connection())
+        assert (seen[0].method, seen[0].url.path) == ("GET", "/server")
 
 
 class TestSES:

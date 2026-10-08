@@ -452,8 +452,14 @@ class EmailAdapter(Adapter):
         then the provider echoes attacker-supplied addresses back to us.
         """
         payload = security.json_payload(request) or {}
-        if email_backends.provider_for(connection) == "resend":
+        provider = email_backends.provider_for(connection)
+        if provider == "resend":
             return self._from_resend(connection, payload)
+        if provider == "postmark":
+            # Postmark bounce webhooks are unsigned and not wired up yet;
+            # ``verify_webhook`` refuses them before this is reached. Never the
+            # SNS parser, which would misread a Postmark body.
+            return []
         return self._from_sns(connection, payload)
 
     # -- Resend -------------------------------------------------------------

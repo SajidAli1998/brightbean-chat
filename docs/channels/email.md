@@ -1,7 +1,7 @@
 # Email
 
 The only outbound-only channel in v1, and the only one where you choose the
-transport: your own SMTP server, Resend, or Amazon SES. The sending domain, the
+transport: your own SMTP server, Resend, Amazon SES or Postmark. The sending domain, the
 reputation and the bill stay yours.
 
 Specification: `docs/SPEC.md` §6.7 (the channel) and §11.10 (the `send_email`
@@ -161,6 +161,31 @@ Every delivery is verified as a Svix signature — an HMAC over the raw body,
 checked before the body is parsed, with a five-minute timestamp tolerance. A
 delivery that does not verify gets a 403, exactly like one naming a connection
 that does not exist.
+
+### Postmark
+
+Sends through Postmark's HTTPS API (`POST https://api.postmarkapp.com/email`),
+not SMTP — so it works on hosts that block outbound SMTP ports, which Railway
+does on every plan below Pro.
+
+- **Server API token** — from the Postmark server's *API Tokens* tab. Verified
+  at connect with `GET /server`; stored encrypted.
+- **Message stream** — blank means `outbound`, the transactional stream every
+  Postmark server has. Postmark requires bulk and marketing mail to go through
+  a **broadcast** stream: create one in Postmark and enter its id (usually
+  `broadcast`) on a connection you send broadcasts from.
+- **From address** — must be a sender signature or a domain verified in that
+  Postmark server.
+
+Bounce handling is not wired up for Postmark yet: its webhooks carry no
+signature, so they need their own authentication before the endpoint can trust
+them. Until then the webhook URL the channel page shows does not apply to a
+Postmark connection.
+
+The deployment's own mail (invites, password resets, notifications) can use
+Postmark too, independently of this channel: set `EMAIL_BACKEND_TYPE=postmark`
+and `POSTMARK_SERVER_TOKEN` (and optionally `POSTMARK_MESSAGE_STREAM`). See
+`.env.example`.
 
 ### Amazon SES
 

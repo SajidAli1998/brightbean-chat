@@ -67,11 +67,13 @@ __all__ = [
     "guard_boto_client",
     "resolved_destination",
     "Envelope",
+    "POSTMARK_API_ROOT",
     "PROVIDERS",
     "RESEND_API_ROOT",
     "credentials_of",
     "deliver",
     "new_message_id",
+    "postmark_headers",
     "provider_for",
     "verify_credentials",
 ]
@@ -79,13 +81,24 @@ __all__ = [
 #: The provider values ``credentials["provider"]`` may hold. Mirrored by
 #: ``apps.channels.views._email_provider``, which builds the webhook URL from
 #: the same value, and by the ``<provider>`` segment of the webhook route.
-PROVIDERS: tuple[str, ...] = ("smtp", "resend", "ses")
+PROVIDERS: tuple[str, ...] = ("smtp", "resend", "ses", "postmark")
 
 #: What a connection with no stored provider is. Matches
 #: ``apps.channels.views.DEFAULT_EMAIL_PROVIDER``, which predates this module.
 DEFAULT_PROVIDER = "smtp"
 
 RESEND_API_ROOT = "https://api.resend.com"
+
+#: Postmark's API host. Like Resend's, a constant, so ``request_json`` rather
+#: than the SSRF guard. It matters on hosts that block outbound SMTP — Railway
+#: below its Pro plan blocks every SMTP port — where an HTTPS API is the only
+#: way a deployment can send mail at all.
+POSTMARK_API_ROOT = "https://api.postmarkapp.com"
+
+#: The message stream a Postmark connection sends through when none is chosen.
+#: ``outbound`` is every Postmark server's default transactional stream; bulk
+#: mail belongs on a broadcast stream, which the operator names at connect.
+DEFAULT_POSTMARK_STREAM = "outbound"
 
 #: SMTP is a conversation, not a request, and 2 seconds is not enough for one
 #: over a TLS handshake to a third-party relay. The adapter runs in a worker.
@@ -175,6 +188,8 @@ def deliver(connection: Any, envelope: Envelope) -> str:
         return _deliver_resend(connection, envelope)
     if provider == "ses":
         return _deliver_ses(connection, envelope)
+    if provider == "postmark":
+        return _deliver_postmark(connection, envelope)
     return _deliver_smtp(connection, envelope)
 
 
@@ -195,6 +210,9 @@ def verify_credentials(connection: Any) -> None:
         return
     if provider == "ses":
         _verify_ses(connection)
+        return
+    if provider == "postmark":
+        _verify_postmark(connection)
         return
     _verify_smtp(connection)
 
@@ -622,6 +640,58 @@ def _verify_resend(connection: Any) -> None:
         "GET",
         f"{RESEND_API_ROOT}/domains",
         headers=_resend_headers(connection),
+        timeout=RESEND_TIMEOUT,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Postmark
+# ---------------------------------------------------------------------------
+
+
+def _postmark_token(connection: Any) -> str:
+    token = credentials_of(connection).get("server_token")
+    if not isinstance(token, str) or not token:
+        raise APIError("This email connection has no Postmark server token stored.")
+    return token
+
+
+def postmark_headers(token: str) -> dict[str, str]:
+    """The request headers for Postmark's API. The token never enters the URL."""
+    return {"X-Postmark-Server-Token": token, "Accept": "application/json", "Content-Type": "application/json"}
+
+
+def _deliver_postmark(connection: Any, envelope: Envelope) -> str:
+    """``POST /email``. Our headers — List-Unsubscribe among them — ride along."""
+    stream = credentials_of(connection).get("message_stream")
+    body: dict[str, Any] = {
+        "From": envelope.sender(),
+        "To": envelope.to,
+        "Subject": envelope.subject,
+        "Headers": [{"Name": name, "Value": value} for name, value in _smtp_headers(envelope).items()],
+        "MessageStream": stream if isinstance(stream, str) and stream else DEFAULT_POSTMARK_STREAM,
+    }
+    if envelope.html:
+        body["HtmlBody"] = envelope.html
+    if envelope.text:
+        body["TextBody"] = envelope.text
+    result = request_json(
+        "POST",
+        f"{POSTMARK_API_ROOT}/email",
+        json=body,
+        headers=postmark_headers(_postmark_token(connection)),
+        timeout=RESEND_TIMEOUT,
+    )
+    provider_id = result.get("MessageID")
+    return provider_id if isinstance(provider_id, str) else envelope.message_id
+
+
+def _verify_postmark(connection: Any) -> None:
+    """Read the server the token belongs to — the cheapest authenticated call."""
+    request_json(
+        "GET",
+        f"{POSTMARK_API_ROOT}/server",
+        headers=postmark_headers(_postmark_token(connection)),
         timeout=RESEND_TIMEOUT,
     )
 

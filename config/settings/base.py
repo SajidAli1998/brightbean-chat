@@ -716,6 +716,11 @@ if EMAIL_BACKEND_TYPE == "smtp":
     EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
     EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
     EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
+elif EMAIL_BACKEND_TYPE == "postmark":
+    # Postmark's HTTPS API, for hosts that block outbound SMTP (apps/common/postmark_mail.py).
+    EMAIL_BACKEND = "apps.common.postmark_mail.PostmarkEmailBackend"
+    POSTMARK_SERVER_TOKEN = env("POSTMARK_SERVER_TOKEN", default="")
+    POSTMARK_MESSAGE_STREAM = env("POSTMARK_MESSAGE_STREAM", default="outbound")
 else:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 

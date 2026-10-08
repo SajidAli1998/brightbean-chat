@@ -215,6 +215,70 @@ class TestResendConnect:
         assert connections(tenancy).get().credentials["signing_secret"] == ""
 
 
+class TestPostmarkConnect:
+    TOKEN = "00000000-1111-2222-3333-444444444444"  # noqa: S105 - a fake credential for tests
+
+    def test_a_good_token_creates_a_connection(
+        self, admin_client: Client, tenancy: Any, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(email_backends, "verify_credentials", lambda connection: None)
+        response = admin_client.post(
+            connect_url(tenancy),
+            {"provider": "postmark", "from_address": "info@sender.test", "server_token": self.TOKEN},
+        )
+        assert response.status_code == 302
+        credentials = connections(tenancy).get().credentials
+        assert credentials["provider"] == "postmark"
+        assert credentials["server_token"] == self.TOKEN
+        assert credentials["message_stream"] == "outbound"
+
+    def test_a_named_stream_is_kept(self, admin_client: Client, tenancy: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(email_backends, "verify_credentials", lambda connection: None)
+        admin_client.post(
+            connect_url(tenancy),
+            {
+                "provider": "postmark",
+                "from_address": "info@sender.test",
+                "server_token": self.TOKEN,
+                "message_stream": "Broadcast",
+            },
+        )
+        assert connections(tenancy).get().credentials["message_stream"] == "broadcast"
+
+    def test_a_malformed_stream_is_refused(self, admin_client: Client, tenancy: Any) -> None:
+        response = admin_client.post(
+            connect_url(tenancy),
+            {
+                "provider": "postmark",
+                "from_address": "info@sender.test",
+                "server_token": self.TOKEN,
+                "message_stream": "../streams",
+            },
+        )
+        assert b"message stream" in response.content
+        assert connections(tenancy).count() == 0
+
+    def test_a_rejected_token_writes_nothing_and_is_not_echoed(
+        self, admin_client: Client, tenancy: Any, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        def refuse(connection: Any) -> None:
+            raise APIError("Postmark said no", status_code=401)
+
+        monkeypatch.setattr(email_backends, "verify_credentials", refuse)
+        response = admin_client.post(
+            connect_url(tenancy),
+            {"provider": "postmark", "from_address": "info@sender.test", "server_token": self.TOKEN},
+        )
+        assert connections(tenancy).count() == 0
+        assert self.TOKEN.encode() not in response.content
+        assert b"Postmark did not accept" in response.content
+
+    def test_the_picker_offers_postmark_with_its_own_fields(self, admin_client: Client, tenancy: Any) -> None:
+        response = admin_client.get(connect_url(tenancy) + "?provider=postmark")
+        assert b'name="server_token"' in response.content
+        assert b'name="access_key_id"' not in response.content
+
+
 class TestSESConnect:
     def test_a_good_key_pair_creates_a_connection(
         self, admin_client: Client, tenancy: Any, monkeypatch: pytest.MonkeyPatch

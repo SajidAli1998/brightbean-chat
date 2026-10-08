@@ -92,7 +92,14 @@ REJECTED_MESSAGES = {
         "AWS did not accept those credentials. Check the access key, secret and region, and that the "
         "key is allowed to use SES."
     ),
+    "postmark": (
+        "Postmark did not accept that server token. Copy the Server API token again from the server's "
+        "API Tokens tab and try again."
+    ),
 }
+
+#: Postmark message stream ids are lowercase letters, digits and hyphens.
+POSTMARK_STREAM_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")
 
 #: How many test emails one connection may send per window, and how long that
 #: window is. A test send puts a real message on the deployment's sending
@@ -162,6 +169,7 @@ def _echoed(request: WorkspaceRequest) -> dict[str, str]:
             "username",
             "region",
             "topic_arn",
+            "message_stream",
         )
     }
 
@@ -229,6 +237,14 @@ def _credentials(request: WorkspaceRequest, provider: str, from_address: str) ->
         # handling needs it, sending does not, and an operator who has not
         # created the endpoint yet should not be blocked from connecting.
         return {**common, "api_key": api_key, "signing_secret": (request.POST.get("signing_secret") or "").strip()}
+    if provider == "postmark":
+        token = (request.POST.get("server_token") or "").strip()
+        if not token:
+            return "Paste the Server API token from your Postmark server's API Tokens tab."
+        stream = (request.POST.get("message_stream") or "").strip().lower() or email_backends.DEFAULT_POSTMARK_STREAM
+        if not POSTMARK_STREAM_RE.match(stream):
+            return "That is not a Postmark message stream id. It looks like outbound or broadcast."
+        return {**common, "server_token": token, "message_stream": stream}
     if provider == "ses":
         key_id = (request.POST.get("access_key_id") or "").strip()
         secret = (request.POST.get("secret_access_key") or "").strip()
