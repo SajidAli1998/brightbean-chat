@@ -22,9 +22,16 @@ Messenger's callback (#18) is the second line: same shape, same reasons.
 
 from django.urls import path
 
-from apps.channels import views_instagram, views_messenger
+from apps.channels import views_instagram, views_instagram_facebook, views_messenger
 
 urlpatterns = [
     path("instagram/callback/", views_instagram.instagram_callback, name="instagram_callback"),
     path("messenger/callback/", views_messenger.messenger_oauth_callback, name="messenger_oauth_callback"),
+    # Instagram through Facebook Login: the Facebook app's dialog, so this URI is
+    # whitelisted on that app next to Messenger's.
+    path(
+        "instagram/facebook/callback/",
+        views_instagram_facebook.instagram_facebook_callback,
+        name="instagram_facebook_callback",
+    ),
 ]

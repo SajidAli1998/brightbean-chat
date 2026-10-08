@@ -152,6 +152,31 @@ def instagram_app(settings: Any) -> dict[str, str]:
 
 
 @pytest.fixture
+def both_meta_apps(settings: Any) -> None:
+    """The Facebook (Messenger) app and the Instagram app, both configured.
+
+    An Instagram account connected through Facebook Login is verified with the
+    Facebook app's secret and one connected through Instagram Login with the
+    Instagram app's, so a test exercising the switch needs both at once —
+    which neither ``app_secret`` nor ``instagram_app`` sets up alone.
+    """
+    from apps.channels.tests.instagram_support import APP_SECRET as INSTAGRAM_APP_SECRET
+
+    settings.PLATFORM_CREDENTIALS_FROM_ENV = {
+        Platform.MESSENGER.value: {
+            "client_id": "1234567890",
+            "client_secret": APP_SECRET,
+            "verify_token": "fake-verify-token",
+        },
+        Platform.INSTAGRAM.value: {
+            "client_id": "1122334455",
+            "client_secret": INSTAGRAM_APP_SECRET,
+            "verify_token": "hub-verify-token",
+        },
+    }
+
+
+@pytest.fixture
 def instagram_connection(tenancy: Any) -> ChannelConnection:
     """An active Instagram connection with a long-lived token on it.
 

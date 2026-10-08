@@ -140,7 +140,7 @@ class MetaPage:
 # ---------------------------------------------------------------------------
 
 
-def mint_state(workspace_id: Any) -> str:
+def mint_state(workspace_id: Any, *, purpose: str = STATE_PURPOSE) -> str:
     """A signed ``state`` for one workspace's connect attempt.
 
     The nonce is not decoration: without it two states minted for the same
@@ -149,11 +149,11 @@ def mint_state(workspace_id: Any) -> str:
     """
     return signing.sign(
         {"workspace": str(workspace_id), "nonce": secrets.token_urlsafe(16)},
-        purpose=STATE_PURPOSE,
+        purpose=purpose,
     )
 
 
-def read_state(state: str) -> str:
+def read_state(state: str, *, purpose: str = STATE_PURPOSE) -> str:
     """The workspace id a ``state`` was minted for, or "" if it is not ours.
 
     Every rejection — forged, expired, minted for another purpose, malformed —
@@ -163,7 +163,7 @@ def read_state(state: str) -> str:
     exception being a single type).
     """
     try:
-        payload = signing.unsign(state, purpose=STATE_PURPOSE, max_age=STATE_MAX_AGE)
+        payload = signing.unsign(state, purpose=purpose, max_age=STATE_MAX_AGE)
     except signing.InvalidTokenError:
         return ""
     workspace = payload.get("workspace")
@@ -187,8 +187,12 @@ def callback_url() -> str:
     return urljoin(settings.APP_URL.rstrip("/") + "/", reverse("messenger_oauth_callback").lstrip("/"))
 
 
-def authorize_url(*, client_id: str, state: str) -> str:
+def authorize_url(*, client_id: str, state: str, scopes: tuple[str, ...] = SCOPES, redirect_uri: str = "") -> str:
     """Where to send the operator's browser to start Facebook Login for Business.
+
+    ``scopes`` and ``redirect_uri`` default to Messenger's. The Instagram flow
+    that runs through the same Facebook app (:mod:`apps.channels.instagram_facebook`)
+    passes its own.
 
     ``auth_type=rerequest`` so an operator who declined a permission the first
     time is asked again rather than being handed straight back with the same
@@ -199,9 +203,9 @@ def authorize_url(*, client_id: str, state: str) -> str:
     query = urlencode(
         {
             "client_id": client_id,
-            "redirect_uri": callback_url(),
+            "redirect_uri": redirect_uri or callback_url(),
             "state": state,
-            "scope": ",".join(SCOPES),
+            "scope": ",".join(scopes),
             "response_type": "code",
             "auth_type": "rerequest",
         }
@@ -209,7 +213,7 @@ def authorize_url(*, client_id: str, state: str) -> str:
     return f"{LOGIN_ROOT}/{GRAPH_VERSION}/dialog/oauth?{query}"
 
 
-def exchange_code(*, code: str, client_id: str, client_secret: str) -> str:
+def exchange_code(*, code: str, client_id: str, client_secret: str, redirect_uri: str = "") -> str:
     """Trade the callback's ``code`` for a long-lived user access token.
 
     Two calls, because Meta's short-lived token expires in about an hour and the
@@ -236,7 +240,8 @@ def exchange_code(*, code: str, client_id: str, client_secret: str) -> str:
         {
             "client_id": client_id,
             "client_secret": client_secret,
-            "redirect_uri": callback_url(),
+            # Must be byte-identical to the one the authorize call carried.
+            "redirect_uri": redirect_uri or callback_url(),
             "code": code,
         }
     )

@@ -89,7 +89,7 @@ from apps.channels.events import (
     SendStatus,
     TextBlock,
 )
-from apps.channels.instagram_oauth import access_token, mark_needs_reauth
+from apps.channels.instagram_oauth import access_token, is_facebook_login, mark_needs_reauth
 from apps.channels.models import ChannelConnection
 from apps.channels.providers import meta_common
 from apps.channels.providers.base import BACKGROUND_TIMEOUT, Adapter, request_json
@@ -118,6 +118,12 @@ __all__ = [
 #: is one, and a configurable API host for calls carrying an access token is an
 #: exfiltration primitive rather than a feature.
 API_ROOT = "https://graph.instagram.com"
+
+#: The Graph host for an account connected through Facebook Login for Business,
+#: where the token is the linked Facebook Page's. Same version, same paths: with
+#: a page token ``me`` is the page, and ``me/messages`` sends as its Instagram
+#: account.
+FACEBOOK_API_ROOT = "https://graph.facebook.com"
 
 #: Pinned rather than floating. Meta deprecates a version roughly every two
 #: years with a year of notice; a floating "latest" would change payload shapes
@@ -246,8 +252,12 @@ def call(
     method: str = "POST",
     params: dict[str, Any] | None = None,
     timeout: float | None = None,
+    root: str = API_ROOT,
 ) -> dict[str, Any]:
     """One Graph call. Returns the decoded body.
+
+    ``root`` is :data:`API_ROOT` or :data:`FACEBOOK_API_ROOT`, chosen by
+    :func:`api_root` from the connection — never from anything a request carries.
 
     Raises :class:`~apps.channels.providers.exceptions.APIError` — or
     :class:`~apps.channels.providers.exceptions.RateLimitError` on a 429 — via
@@ -262,13 +272,18 @@ def call(
         raise APIError("This Instagram connection has no access token stored.")
     return request_json(
         method,
-        f"{API_ROOT}/{API_VERSION}/{path}",
+        f"{root}/{API_VERSION}/{path}",
         json=payload,
         params=params,
         headers={"Authorization": f"Bearer {token}"},
         client=_client(),
         timeout=timeout,
     )
+
+
+def api_root(connection: ChannelConnection) -> str:
+    """The Graph host this connection's token belongs to."""
+    return FACEBOOK_API_ROOT if is_facebook_login(connection) else API_ROOT
 
 
 # ---------------------------------------------------------------------------
@@ -743,8 +758,14 @@ class InstagramAdapter(Adapter):
         return None
 
     def verify_webhook(self, request: "HttpRequest", connection: ChannelConnection) -> bool:
-        """``X-Hub-Signature-256`` over the raw body, with the app secret."""
-        return meta_common.verify_hub_signature(request, connection)
+        """``X-Hub-Signature-256`` over the raw body, with the app secret.
+
+        Whose app secret depends on how the account was connected: Instagram
+        Login deliveries are signed by the Instagram app, Facebook Login ones by
+        the Facebook app — the one ``PLATFORM_MESSENGER_*`` configures.
+        """
+        credential_platform = Platform.MESSENGER.value if is_facebook_login(connection) else ""
+        return meta_common.verify_hub_signature(request, connection, credential_platform=credential_platform)
 
     def parse_events(self, request: "HttpRequest", connection: ChannelConnection) -> list[NormalizedEvent]:
         """Turn one verified delivery into normalized events.
@@ -820,7 +841,7 @@ class InstagramAdapter(Adapter):
                 # thread a moment ago.
                 body = {**body, "recipient": {"id": recipient_id}}
             try:
-                result = call(token, "me/messages", body)
+                result = call(token, "me/messages", body, root=api_root(connection))
             except APIError as exc:
                 self._handle_send_error(connection, recipient_id, exc)
                 raise
@@ -882,6 +903,7 @@ class InstagramAdapter(Adapter):
                 access_token(connection),
                 "me/messages",
                 {"recipient": {"id": recipient_id}, "sender_action": action},
+                root=api_root(connection),
             )
         except APIError:
             logger.debug("Instagram: %s failed on connection %s.", action, connection.pk)
@@ -1443,9 +1465,9 @@ def _spend_private_reply(row: Any, identity: Any, result: dict[str, Any]) -> Non
         logger.info("Instagram: private reply sent for comment row %s (message %s).", row.pk, result.get("message_id"))
 
 
-def reply_to_comment(token: str, comment_id: str, text: str) -> None:
+def reply_to_comment(token: str, comment_id: str, text: str, *, root: str = API_ROOT) -> None:
     """Post a public reply under a comment: ``POST /{ig-comment-id}/replies``."""
-    call(token, f"{comment_id}/replies", {"message": text})
+    call(token, f"{comment_id}/replies", {"message": text}, root=root)
 
 
 def _public_reply_text(config: dict[str, Any]) -> str:
@@ -1584,7 +1606,7 @@ def _send_public_reply(connection: ChannelConnection, row: Any, config: dict[str
         logger.info("Instagram: comment row %s already has its public reply.", row.pk)
         return
     try:
-        reply_to_comment(access_token(connection), row.comment_id, text)
+        reply_to_comment(access_token(connection), row.comment_id, text, root=api_root(connection))
     except APIError as exc:
         logger.info("Instagram: public reply to comment row %s was refused (code=%s).", row.pk, exc.code)
     except Exception:
@@ -1652,12 +1674,16 @@ def recent_media(connection: ChannelConnection, *, limit: int = MEDIA_PAGE_SIZE)
     the caller is a template, and handing a view the provider's json invites
     somebody to render a key nobody vetted.
     """
+    # With a page token ``me`` is the page, which has no ``media`` edge; the
+    # Instagram account's own id does.
+    facebook = is_facebook_login(connection)
     body = call(
         access_token(connection),
-        "me/media",
+        f"{connection.external_id}/media" if facebook else "me/media",
         method="GET",
         params={"fields": MEDIA_FIELDS, "limit": max(1, min(limit, MEDIA_PAGE_SIZE))},
         timeout=BACKGROUND_TIMEOUT,
+        root=FACEBOOK_API_ROOT if facebook else API_ROOT,
     )
     raw = body.get("data")
     if not isinstance(raw, list):

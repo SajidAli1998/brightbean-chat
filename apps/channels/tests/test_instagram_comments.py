@@ -773,3 +773,73 @@ def test_the_responder_registry_survives_this_module() -> None:
     whole tuple would turn every one of those into a failure here rather than in
     the workstream that changed something."""
     assert "instagram" in comment_responders.registered_platforms()
+
+
+@pytest.mark.usefixtures("both_meta_apps", "real_pipeline")
+class TestCommentToDmThroughFacebookLogin:
+    """The same feature for an account connected through Facebook Login.
+
+    Deliveries are signed by the Facebook app and both replies go to
+    graph.facebook.com with the page token; nothing else about the path changes.
+    """
+
+    def test_both_replies_go_to_graph_facebook_with_the_page_token(
+        self,
+        client: Client,
+        tenancy: Tenancy,
+        instagram_connection: ChannelConnection,
+        comment_trigger: Trigger,
+    ) -> None:
+        from apps.channels import instagram_oauth
+        from apps.channels.tests.messenger_support import APP_SECRET as FACEBOOK_APP_SECRET
+        from apps.channels.tests.messenger_support import PAGE_TOKEN
+
+        instagram_connection.credentials = {  # type: ignore[assignment]
+            instagram_oauth.TOKEN_KEY: PAGE_TOKEN,
+            instagram_oauth.LOGIN_KEY: instagram_oauth.FACEBOOK_LOGIN,
+            instagram_oauth.PAGE_ID_KEY: "555555555555555",
+        }
+        instagram_connection.save()
+
+        hosts: list[str] = []
+
+        def record_hosts(api: Any) -> None:
+            original = api.handle
+
+            def handle(request: Any) -> Any:
+                hosts.append(request.url.host)
+                return original(request)
+
+            api.handle = handle
+
+        body = json.dumps(at_now(load_delivery("comment"))).encode()
+        with fake_graph(record_hosts) as api:
+            response = client.post(
+                WEBHOOK_URL,
+                data=body,
+                content_type="application/json",
+                headers={SIGNATURE_HEADER: sign(body, FACEBOOK_APP_SECRET)},
+            )
+            assert response.status_code == 200
+            assert run_queued() == 1
+
+        assert api.bodies(f"{COMMENT_ID}/replies") == [{"message": "Sent you a DM!"}]
+        (message,) = api.message_bodies()
+        assert message["recipient"] == {"comment_id": COMMENT_ID}
+        assert set(hosts) == {"graph.facebook.com"}
+        assert set(api.tokens) == {f"Bearer {PAGE_TOKEN}"}
+
+    def test_a_delivery_signed_by_the_instagram_app_is_refused(
+        self,
+        client: Client,
+        instagram_connection: ChannelConnection,
+        comment_trigger: Trigger,
+    ) -> None:
+        from apps.channels import instagram_oauth
+
+        instagram_connection.credentials = {  # type: ignore[assignment]
+            instagram_oauth.TOKEN_KEY: "page-token",
+            instagram_oauth.LOGIN_KEY: instagram_oauth.FACEBOOK_LOGIN,
+        }
+        instagram_connection.save()
+        assert deliver(client, at_now(load_delivery("comment"))).status_code == 403

@@ -356,6 +356,21 @@ def account_profile(token: str) -> dict[str, str]:
 # ---------------------------------------------------------------------------
 
 
+#: Marks a connection made through **Facebook Login for Business** rather than
+#: Instagram Login: the Instagram account was reached through the Facebook Page
+#: it is linked to, ``access_token`` holds that page's token, and every call goes
+#: to graph.facebook.com. See :mod:`apps.channels.instagram_facebook`.
+LOGIN_KEY = "login"
+FACEBOOK_LOGIN = "facebook"
+#: The linked page, kept for the webhook subscription the page owns.
+PAGE_ID_KEY = "page_id"
+
+
+def is_facebook_login(connection: Any) -> bool:
+    """Whether ``connection`` was made through Facebook Login for Business."""
+    return _credentials(connection).get(LOGIN_KEY) == FACEBOOK_LOGIN
+
+
 def access_token(connection: Any) -> str:
     """The stored long-lived token, or "" when there is none.
 
@@ -503,6 +518,11 @@ def refresh_expiring_tokens(margin: timedelta | None = None) -> int:
         .order_by("created_at")
     )
     for connection in connections:
+        if is_facebook_login(connection):
+            # A page token, which does not expire on Instagram Login's 60-day
+            # cycle and which graph.instagram.com's refresh endpoint would refuse
+            # — flipping a working connection to needs_reauth every hour.
+            continue
         expires = token_expires_at(connection)
         if expires is not None and expires > cutoff:
             continue

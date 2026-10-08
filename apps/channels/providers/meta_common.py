@@ -76,8 +76,13 @@ MAX_ENTRIES = 100
 MAX_ITEMS_PER_ENTRY = 100
 
 
-def app_secret(connection: "ChannelConnection") -> str:
+def app_secret(connection: "ChannelConnection", *, credential_platform: str = "") -> str:
     """The Meta app secret in force for ``connection``'s workspace, or "".
+
+    ``credential_platform`` names whose app signed the delivery when it is not
+    the connection's own platform — an Instagram account connected through
+    Facebook Login is signed by the Facebook (Messenger) app. The caller says
+    so; this module never asks which platform it is looking at.
 
     Resolved through SPEC §4's chain — deployment env → organization — which is
     the same resolution the connect flow used to obtain the token in the first
@@ -92,7 +97,9 @@ def app_secret(connection: "ChannelConnection") -> str:
     from apps.credentials.resolution import resolve_platform_credentials
 
     try:
-        resolution = resolve_platform_credentials(connection.platform, workspace=connection.workspace)
+        resolution = resolve_platform_credentials(
+            credential_platform or connection.platform, workspace=connection.workspace
+        )
     except Exception:
         # A decryption failure on the credential row. Nothing about it is the
         # caller's business, and it must not turn an unauthenticated request
@@ -106,7 +113,9 @@ def app_secret(connection: "ChannelConnection") -> str:
     return ""
 
 
-def verify_hub_signature(request: "HttpRequest", connection: "ChannelConnection") -> bool:
+def verify_hub_signature(
+    request: "HttpRequest", connection: "ChannelConnection", *, credential_platform: str = ""
+) -> bool:
     """``X-Hub-Signature-256`` over the **raw** body, constant time.
 
     Fails closed on everything — no secret configured, no header, a wrong
@@ -120,7 +129,7 @@ def verify_hub_signature(request: "HttpRequest", connection: "ChannelConnection"
     the endpoint parses anything for exactly that reason.
     """
     return security.verify_signature_header(
-        secret=app_secret(connection),
+        secret=app_secret(connection, credential_platform=credential_platform),
         raw_body=request.body,
         header_value=request.headers.get(SIGNATURE_HEADER),
     )

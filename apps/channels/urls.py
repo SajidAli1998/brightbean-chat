@@ -12,6 +12,7 @@ from apps.channels import (
     views,
     views_email,
     views_instagram,
+    views_instagram_facebook,
     views_messenger,
     views_preview,
     views_sms,
@@ -72,6 +73,18 @@ urlpatterns = [
     # id and lives in ``urls_oauth.py`` at the deployment root instead.
     path("instagram/connect/", views_instagram.instagram_connect, name="instagram_connect"),
     path("instagram/posts/", views_instagram.instagram_posts, name="instagram_posts"),
+    # The same account through Facebook Login for Business, for apps whose Meta
+    # dashboard offers only "API setup with Facebook login".
+    path(
+        "instagram/facebook/connect/",
+        views_instagram_facebook.instagram_facebook_connect,
+        name="instagram_facebook_connect",
+    ),
+    path(
+        "instagram/facebook/accounts/",
+        views_instagram_facebook.instagram_facebook_accounts,
+        name="instagram_facebook_accounts",
+    ),
     # Messenger's guided connect (issue #18), the page chooser, and the comment
     # trigger's post picker. Its OAuth callback is not here either, and for the
     # same reason.

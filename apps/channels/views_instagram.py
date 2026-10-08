@@ -41,6 +41,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_GET
 
+from apps.channels import instagram_facebook
 from apps.channels import instagram_oauth as oauth
 from apps.channels.forms import DUPLICATE_ACCOUNT_ERROR
 from apps.channels.models import ChannelConnection, ConnectionStatus
@@ -112,6 +113,12 @@ def instagram_connect(request: WorkspaceRequest, workspace_id: str) -> HttpRespo
             "callback_url": oauth.callback_url(),
             "scopes": oauth.SCOPES,
             "list_url": reverse("channels:list", kwargs={"workspace_id": workspace_id}),
+            # The Facebook Login alternative (apps.channels.instagram_facebook).
+            "facebook_connect_url": reverse(
+                "channels:instagram_facebook_connect", kwargs={"workspace_id": workspace_id}
+            ),
+            "facebook_callback_url": instagram_facebook.callback_url(),
+            "facebook_scopes": instagram_facebook.SCOPES,
         },
     )
 

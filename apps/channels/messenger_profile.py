@@ -133,7 +133,7 @@ def fetch_profile(payload: dict[str, Any], action: Any) -> None:
     identity = (
         ContactChannelIdentity.objects.for_workspace(action.workspace_id)
         .select_related("contact", "channel_connection")
-        .filter(pk=payload.get("identity_id"))
+        .filter(pk=str(payload.get("identity_id") or ""))
         .first()
     )
     if identity is None or identity.channel_connection is None:

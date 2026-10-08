@@ -39,6 +39,7 @@ GUARDED_MODULES: dict[str, str] = {
     "views_telegram.py": "Bot token connect flow.",
     "views_instagram.py": "OAuth callback.",
     "views_messenger.py": "Page connect flow.",
+    "views_instagram_facebook.py": "Instagram through Facebook Login.",
     "views_whatsapp.py": "Phone number connect flow.",
     "views_sms.py": "Twilio credentials connect flow.",
     "views_email.py": "SMTP / Resend / SES connect flow.",

@@ -147,6 +147,38 @@ triggers on that connection are kept.
 
 ---
 
+## Connecting through a Facebook Page instead
+
+Some Meta apps show only **API setup with Facebook login** under the Instagram
+use case, with no Instagram Login setup to take an Instagram app ID from. For
+those, the connect page has a second route: **Continue with Facebook**, which
+uses the **Instagram API with Facebook Login** (`apps/channels/instagram_facebook.py`).
+
+- **Same Meta app as Messenger.** It signs in through Facebook Login for
+  Business with `PLATFORM_MESSENGER_CLIENT_ID` / `PLATFORM_MESSENGER_CLIENT_SECRET`.
+  No Instagram app ID or secret is involved.
+- **The account must be linked to a Facebook Page** you manage. The chooser
+  lists the Instagram accounts linked to the pages you grant; pages without one
+  are left out.
+- **Redirect URI.** Add `https://<your-host>/channels/instagram/facebook/callback/`
+  to the Facebook app's *Facebook Login for Business → Valid OAuth Redirect URIs*.
+- **Webhook.** On the Facebook app, subscribe the **Instagram** object to
+  `https://<your-host>/webhooks/instagram/` with `PLATFORM_INSTAGRAM_VERIFY_TOKEN`,
+  and subscribe the fields `messages`, `messaging_postbacks`, `comments` and
+  `message_deletions`. Deliveries are verified with the Facebook app's secret.
+  Connecting installs the app on the linked page (`subscribed_apps`, with the
+  same fields Messenger uses, so a Messenger connection on that page is unaffected).
+- **Permissions:** `instagram_basic`, `instagram_manage_messages`,
+  `instagram_manage_comments`, `pages_show_list`, `pages_read_engagement`,
+  `pages_manage_metadata`, `business_management`.
+- **Tokens.** The connection holds the page's token, which does not expire on
+  Instagram Login's 60-day cycle; the refresh sweep skips it.
+
+Everything after connecting — DMs, comment-to-DM, public comment replies — is
+the same feature set; only the host (`graph.facebook.com`) and the signing app
+differ. Connecting an account already connected through Instagram Login in the
+same workspace switches it over in place, keeping its conversations and triggers.
+
 ## What arrives
 
 | What the contact does | Event | Notes |
@@ -363,8 +395,6 @@ screencast. This is a Meta process; nothing in this product changes it.
 ## Out of scope in v1
 
 - **Broadcasts.** Instagram never appears in the composer (SPEC §13.2).
-- **Facebook-Login-based Instagram.** This product uses Instagram Login only;
-  the Page-linked variant is a different API surface with different permissions.
 - **Liking comments**, for the reason above.
 - **Hiding or deleting comments.** The API supports both; no trigger action
   exposes them yet.

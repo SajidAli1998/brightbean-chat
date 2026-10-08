@@ -63,6 +63,35 @@ with in another tab, so none of them is a detail to tidy away.
     </form>
 
     <section class="card p-6 mb-5">
+        <h2 class="section-title mb-1">Or connect through a Facebook Page</h2>
+        <p class="section-note mb-4">
+            Uses the <strong>Instagram API with Facebook Login</strong> and the same Meta app as
+            Messenger (<code>PLATFORM_MESSENGER_CLIENT_ID</code> and
+            <code>PLATFORM_MESSENGER_CLIENT_SECRET</code>). The Instagram account must be linked to
+            a Facebook Page you manage. Use this when your Meta app offers only "API setup with
+            Facebook login".
+        </p>
+        <ol class="cn-steps mb-5" role="list">
+            <li class="cn-step">
+                Add this callback URL to the Facebook app's <em>Facebook Login for Business</em>
+                &rarr; <em>Valid OAuth Redirect URIs</em>.
+                <div class="mt-2.5">{% include "partials/_copy_field.html" with label="Callback URL" value=facebook_callback_url only %}</div>
+            </li>
+            <li class="cn-step">
+                Point the Facebook app's <em>Instagram</em> webhook at this deployment's
+                <code>/webhooks/instagram/</code> with <code>PLATFORM_INSTAGRAM_VERIFY_TOKEN</code>.
+            </li>
+        </ol>
+        <form method="post" action="{{ facebook_connect_url }}">
+            {% csrf_token %}
+            <button type="submit" class="btn-pill-secondary">Continue with Facebook</button>
+        </form>
+        <p class="field-hint mt-3">
+            Asks for: {% for scope in facebook_scopes %}<code>{{ scope }}</code>{% if not forloop.last %} {% endif %}{% endfor %}
+        </p>
+    </section>
+
+    <section class="card p-6 mb-5">
         <h2 class="section-title mb-3">What we ask Instagram for</h2>
         <ul class="flex flex-wrap gap-1.5">
             {% for scope in scopes %}<li><code>{{ scope }}</code></li>{% endfor %}

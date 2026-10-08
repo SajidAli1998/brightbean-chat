@@ -1,0 +1,42 @@
+{% extends "layouts/workspace_settings.html" %}
+{% block title %}Choose an Instagram account · BrightBean Chat{% endblock %}
+{% block page_header %}<h1>Choose an Instagram account to connect</h1>{% endblock %}
+
+{% block content %}
+  {% if error %}
+    <div class="alert-error"><p>{{ error }}</p></div>
+  {% endif %}
+
+  {% if accounts %}
+    <p class="muted">
+      These are the Instagram professional accounts linked to the Facebook pages you
+      just granted. Connecting one installs this deployment's app on its page so
+      Instagram messages and comments arrive here.
+    </p>
+    <form method="post">
+      {% csrf_token %}
+      <ul class="list-reset">
+        {% for account in accounts %}
+          <li>
+            <label>
+              <input type="radio" name="account_id" value="{{ account.id }}"
+                     {% if forloop.first %}checked{% endif %} />
+              @{{ account.username }}
+              {% if account.page_name %}<span class="muted">via {{ account.page_name }}</span>{% endif %}
+            </label>
+          </li>
+        {% endfor %}
+      </ul>
+      <button type="submit">Connect this account</button>
+    </form>
+  {% else %}
+    <p class="muted">
+      None of the pages you granted has an Instagram professional account linked to it.
+      Link the account to its Facebook Page in Instagram's settings (Account type and tools
+      &rarr; Business), then start again and pick that page.
+    </p>
+    <p><a href="{{ connect_url }}">Start again</a></p>
+  {% endif %}
+
+  <p><a href="{{ list_url }}">Back to channels</a></p>
+{% endblock %}
