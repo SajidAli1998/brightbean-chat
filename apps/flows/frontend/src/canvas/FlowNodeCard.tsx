@@ -156,7 +156,7 @@ function FlowNodeCardInner({
               </span>
             </>
           ) : stats && !stats.available && !isNote ? (
-            <span className="fb-pill">—</span>
+            <span className="fb-pill">No stats</span>
           ) : null}
         </div>
       ) : null}

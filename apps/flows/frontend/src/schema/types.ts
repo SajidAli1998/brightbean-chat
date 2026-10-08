@@ -196,6 +196,11 @@ export interface SaveResult {
   validation: ValidationPayload;
 }
 
+/** Publishing can enable an entirely paused trigger set. */
+export interface PublishResult extends SaveResult {
+  triggers: TriggerSummary[];
+}
+
 export interface NodeStats {
   sent: number;
   delivered: number;

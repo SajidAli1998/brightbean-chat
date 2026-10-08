@@ -33,11 +33,9 @@ guaranteed flash of an unstyled canvas.
   principle, and this page was the worst offender: it printed
   "flow_id 4f0c2a91-… · draft v12 · published v11" above the canvas.
 
-  What a reader needs from that line is two answers, not three numbers: is this
-  live, and are my changes saved. The first is the pill below; the second is the
-  builder's own save indicator, which is inside the island because only the
-  island knows. Versions remain available through the Versions view for the
-  people who genuinely work in them.
+  The React toolbar owns publication, trigger reachability and save status so
+  those answers update immediately after a publish or trigger change. Versions
+  remain available through the Versions view.
 {% endcomment %}
 {% block page_header %}
 <div class="flex flex-wrap items-center gap-3 mb-4">
@@ -47,15 +45,6 @@ guaranteed flash of an unstyled canvas.
         Flows
     </a>
     <h1 class="text-base font-bold truncate min-w-0" style="color: var(--text-primary);">{{ flow.name }}</h1>
-    {% if flow.status == "active" %}
-    <span class="status-pill status-pill-active inline-flex items-center gap-1.5 flex-shrink-0">
-        <span class="status-pill-dot"></span>Live
-    </span>
-    {% elif flow.status == "archived" %}
-    <span class="status-pill status-pill-archived flex-shrink-0">Archived</span>
-    {% else %}
-    <span class="status-pill status-pill-draft flex-shrink-0">Draft</span>
-    {% endif %}
     <div class="ml-auto flex items-center gap-2 text-xs" style="color: var(--text-tertiary);">
         {% if not can_edit %}<span>Read-only</span>{% endif %}
         {% comment %}
@@ -78,9 +67,27 @@ guaranteed flash of an unstyled canvas.
           as a data attribute, so an action it does not take belongs here.
         {% endcomment %}
         {% if can_edit %}
-        <a href="{{ export_url }}" class="btn-pill-secondary btn-pill-sm">Download a copy</a>
-        <a href="{{ export_bundle_url }}" class="btn-pill-secondary btn-pill-sm"
-           title="This flow and every flow it hands over to, as one file">With everything it uses</a>
+        <div class="bb-split" x-data="{ choice: 'single', menuOpen: false }" @click.away="menuOpen = false"
+             @keydown.escape.window="menuOpen = false">
+            <a href="{{ export_url }}"
+               :href="choice === 'bundle' ? '{{ export_bundle_url|escapejs }}' : '{{ export_url|escapejs }}'"
+               :aria-label="choice === 'bundle' ? 'Download with everything it uses' : 'Download a copy'"
+               :title="choice === 'bundle' ? 'Download with everything it uses' : 'Download a copy'"
+               class="bb-split-main" aria-label="Download a copy" title="Download a copy">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v3h16v-3"/></svg>
+            </a>
+            <button type="button" class="bb-split-toggle" @click="menuOpen = !menuOpen"
+                    :aria-expanded="menuOpen ? 'true' : 'false'" aria-haspopup="true"
+                    aria-label="Choose download type" title="Choose download type">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div x-show="menuOpen" x-cloak class="bb-split-menu">
+                <button type="button" @click="choice = 'single'; menuOpen = false"
+                        :aria-current="choice === 'single' ? 'true' : null">Download a copy</button>
+                <button type="button" @click="choice = 'bundle'; menuOpen = false"
+                        :aria-current="choice === 'bundle' ? 'true' : null">With everything it uses</button>
+            </div>
+        </div>
         {% endif %}
     </div>
 </div>

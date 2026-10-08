@@ -19,6 +19,7 @@ import { makeDetail, makeSampleGraph } from "../test/fixtures";
 import { makeStore, renderWith } from "../test/render";
 import type { TriggerSummary } from "../schema/types";
 import { StepEditor } from "./StepEditor";
+import { TriggerSidebar } from "./TriggerSidebar";
 import { titleOf } from "./title";
 
 function trigger(overrides: Partial<TriggerSummary> = {}): TriggerSummary {
@@ -49,14 +50,14 @@ function oneStep(triggers: TriggerSummary[] = []) {
 
 describe("what starts the flow", () => {
   it("is on screen without opening anything", () => {
-    renderWith(makeStore(oneStep([trigger()])), <StepEditor />);
+    renderWith(makeStore(oneStep([trigger()])), <TriggerSidebar />);
 
     expect(screen.getByText("Comment")).toBeInTheDocument();
     expect(screen.getByText("Comments on any post")).toBeInTheDocument();
   });
 
   it("says so plainly when there is none, because that flow can never run", () => {
-    renderWith(makeStore(oneStep()), <StepEditor />);
+    renderWith(makeStore(oneStep()), <TriggerSidebar />);
 
     expect(screen.getByText(/nothing starts this flow yet/i)).toBeInTheDocument();
   });
@@ -64,9 +65,9 @@ describe("what starts the flow", () => {
   it("says so when every trigger it has is switched off", () => {
     // How every imported template arrives. Without this the column shows a
     // trigger and reads as a working flow.
-    renderWith(makeStore(oneStep([trigger({ enabled: false })])), <StepEditor />);
+    renderWith(makeStore(oneStep([trigger({ enabled: false })])), <TriggerSidebar />);
 
-    expect(screen.getByText(/switched off, so nothing reaches this flow/i)).toBeInTheDocument();
+    expect(screen.getByText(/Every trigger is off, so nothing reaches this flow/i)).toBeInTheDocument();
   });
 
   it("edits through the Django drawer rather than a second editor of its own", () => {
@@ -74,11 +75,11 @@ describe("what starts the flow", () => {
     // A React trigger editor would be a second place for the platform gate and
     // the config schemas to be wrong.
     const store = makeStore(oneStep([trigger()]));
-    renderWith(store, <StepEditor />);
+    renderWith(store, <TriggerSidebar />);
     let opened = 0;
     window.addEventListener("toggle-triggers", () => (opened += 1));
 
-    fireEvent.click(screen.getByRole("button", { name: /change what starts it/i }));
+    fireEvent.click(screen.getByRole("button", { name: /manage triggers/i }));
 
     expect(opened).toBe(1);
   });

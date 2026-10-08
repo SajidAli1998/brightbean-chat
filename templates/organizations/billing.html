@@ -5,7 +5,7 @@
 {% block content_wrap %}{% endblock %}
 
 {% block content %}
-<div class="max-w-[900px] w-full">
+<div class="max-w-[1060px] w-full">
   <h1 class="page-title">Plan &amp; billing</h1>
   <p class="page-lede mt-1.5 mb-6">What this organization is on, and what it is using.</p>
 
@@ -13,7 +13,7 @@
     <div class="alert-info mb-4">Checkout was cancelled. No charge was made.</div>
   {% elif checkout_state == "activating" %}
     <div class="alert-info mb-4">
-      Your subscription is being activated. This usually takes a few seconds — refresh the page.
+      Activating your subscription. Refresh in a few seconds.
     </div>
   {% endif %}
 
@@ -126,7 +126,7 @@
       <p class="mb-4 text-sm" style="color: var(--text-secondary);">Renews on {{ renews_on|date:"j F Y" }}.</p>
     {% elif cancels_on %}
       <p class="mb-4 text-sm" style="color: var(--text-secondary);">
-        Your plan ends on {{ cancels_on|date:"j F Y" }}. Nothing is deleted — you keep everything you have made.
+            Your plan ends on {{ cancels_on|date:"j F Y" }}. Your work stays here.
       </p>
     {% endif %}
 

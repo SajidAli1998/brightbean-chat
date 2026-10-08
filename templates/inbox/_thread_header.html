@@ -14,11 +14,11 @@ it under the reader mid-choice.
 {% load common_extras %}
 <header class="ib-thread-header">
   {% comment %}
-    Below `lg` the two panes take turns (see the media query in styles.css), so
+    Below `xl` the list and conversation take turns (see the media query in styles.css), so
     the thread needs a way back to the list. A plain link, because on a phone
     "back" is a whole-page change and there is no second pane to swap.
   {% endcomment %}
-  <a class="btn-icon-hover lg:hidden" href="{% url 'inbox:list' workspace_id=request.workspace.id %}"
+  <a class="btn-icon-hover xl:hidden" href="{% url 'inbox:list' workspace_id=request.workspace.id %}"
      aria-label="Back to conversations">
     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
       <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
@@ -33,6 +33,7 @@ it under the reader mid-choice.
   </div>
 
   {% if can_reply %}
+  <div class="ib-thread-actions">
     <form hx-post="{% url 'inbox:state' workspace_id=request.workspace.id conversation_id=conversation.id %}" hx-swap="none">
       {% csrf_token %}
       {% if conversation.state == "done" %}
@@ -56,6 +57,7 @@ it under the reader mid-choice.
         {% endfor %}
       </select>
     </form>
+  </div>
   {% else %}
     <span class="ib-chip">Read only</span>
   {% endif %}

@@ -8,16 +8,9 @@
  * errors: what the builder knows is only as of the last save, so disabling it
  * would be a claim it cannot support.
  *
- * The one case where Publish *is* disabled is not that policy loosening. It is
- * the server having told us this exact version is published and nothing having
- * been edited since, which the builder can support: any edit bumps `revision`,
- * which moves save.state to dirty, which re-enables the button. See
- * publishState.ts.
- *
- * The trigger count used to live here as a badge, because the canvas gave no
- * hint that a flow with no trigger never runs. The canvas now says so itself,
- * in the place the missing thing would be, so a header chip repeating it would
- * be a second copy of a fact the user is already looking at.
+ * An unchanged published version needs no repeat publish unless all its
+ * configured triggers are off. In that case the action turns them on, and the
+ * status says plainly why the published flow cannot start yet.
  */
 import { useState } from "react";
 
@@ -41,12 +34,12 @@ export function Toolbar({ autosave }: { autosave: Autosave | null }) {
   const errorCount = useBuilder((state) => state.validation.errors.length);
   const warningCount = useBuilder((state) => state.validation.warnings.length);
   const flowStatus = useBuilder((state) => state.flow?.status);
-  const view = publishView(save, flowStatus);
-  const triggerCount = useBuilder((state) => state.triggers.length);
-  const loaded = useBuilder((state) => state.flow !== null);
+  const triggers = useBuilder((state) => state.triggers);
+  const view = publishView(save, flowStatus, triggers.length, triggers.filter((trigger) => trigger.enabled).length);
   const [publishing, setPublishing] = useState(false);
 
   const publish = async () => {
+    const enablingOnly = view.publishLabel === "Turn on triggers";
     setPublishing(true);
     try {
       // Flush first, and stop if it did not land. Publishing a draft the server
@@ -66,6 +59,7 @@ export function Toolbar({ autosave }: { autosave: Autosave | null }) {
       // so the header this button sits in went on offering Publish for a flow
       // that had just gone live.
       store.getState().setFlow(result.flow);
+      store.getState().setTriggers(result.triggers);
       store.getState().setSave({
         state: "saved",
         version: result.version,
@@ -73,12 +67,11 @@ export function Toolbar({ autosave }: { autosave: Autosave | null }) {
         message: null,
         issues: [],
       });
-      // The header now reads "Live", but a header is not where someone is
-      // looking when they press a button. Say it once, out loud.
+      // Report the action where the person pressed it, as well as in status.
       showToast({
         tone: "success",
-        title: "Flow published",
-        body: `Version ${result.version.version} is live.`,
+        title: enablingOnly ? "Triggers turned on" : "Flow published",
+        body: enablingOnly ? "All triggers are now on." : `Version ${result.version.version} is published.`,
       });
     } catch (error) {
       if (error instanceof ApiError && error.status === 422) {
@@ -97,24 +90,31 @@ export function Toolbar({ autosave }: { autosave: Autosave | null }) {
 
   return (
     <div className="fb-toolbar">
+      <span className={`fb-flow-status fb-flow-status-${view.statusTone}`} aria-live="polite">
+        <span className="fb-flow-status-dot" aria-hidden="true" />
+        {view.statusLabel}
+      </span>
+      <span className="fb-toolbar-divider" aria-hidden="true" />
       {canEdit ? (
         <>
-          <button type="button" className="btn-link text-xs" disabled={!canUndo} onClick={() => store.getState().undo()}>
-            Undo
+          <button type="button" className="fb-toolbar-icon" aria-label="Undo" title="Undo" disabled={!canUndo} onClick={() => store.getState().undo()}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-2"/></svg>
           </button>
-          <button type="button" className="btn-link text-xs" disabled={!canRedo} onClick={() => store.getState().redo()}>
-            Redo
+          <button type="button" className="fb-toolbar-icon" aria-label="Redo" title="Redo" disabled={!canRedo} onClick={() => store.getState().redo()}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h2"/></svg>
           </button>
         </>
       ) : null}
 
       <button
         type="button"
-        className="btn-link text-xs"
+        className="fb-toolbar-icon"
+        aria-label={statsVisible ? "Hide stats" : "Show stats"}
+        title={statsVisible ? "Hide stats" : "Show stats"}
         aria-pressed={statsVisible}
         onClick={() => store.getState().toggleStats()}
       >
-        {statsVisible ? "Hide stats" : "Show stats"}
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V11M10 20V5M16 20v-8M22 20V8"/></svg>
       </button>
 
       {statsFailed ? <span className="fb-badge fb-badge-warning">Stats unavailable</span> : null}
@@ -127,37 +127,21 @@ export function Toolbar({ autosave }: { autosave: Autosave | null }) {
       */}
       {canEdit ? <TestOnChannel /> : null}
 
-      <span className="ml-auto flex items-center gap-2 text-xs" style={{ color: "var(--text-tertiary)" }}>
+      <span className="fb-toolbar-meta">
         {errorCount > 0 ? <span className="fb-badge fb-badge-error">{errorCount} to fix</span> : null}
         {warningCount > 0 ? <span className="fb-badge fb-badge-warning">{warningCount} to check</span> : null}
-        {/*
-          A published flow with no trigger never runs, and the canvas gives no
-          hint of that — so it is the one thing worth saying about triggers from
-          an island that does not own them. Editing happens in the HTMX drawer
-          behind the header's Triggers button.
-        */}
-        {loaded ? (
-          triggerCount > 0 ? (
-            <span className="fb-badge">
-              {triggerCount} trigger{triggerCount === 1 ? "" : "s"}
-            </span>
-          ) : (
-            <span className="fb-badge fb-badge-warning">No triggers</span>
-          )
-        ) : null}
-        {view.liveChip ? <span className="fb-badge fb-badge-success">{view.liveChip}</span> : null}
-        <span data-save-state={save.state} data-publish-tone={view.tone}>
-          {view.label}
+        <span data-save-state={save.state}>
+          {view.saveLabel}
         </span>
         {canEdit ? (
           <button
             type="button"
-            className="btn-primary-sm"
+            className="btn-pill-primary btn-pill-sm"
             disabled={publishing || view.publishDisabled}
             title={view.publishHint ?? undefined}
             onClick={() => void publish()}
           >
-            {publishing ? "Setting live…" : view.publishLabel}
+            {publishing ? (view.publishLabel === "Turn on triggers" ? "Turning on…" : "Setting live…") : view.publishLabel}
           </button>
         ) : null}
       </span>

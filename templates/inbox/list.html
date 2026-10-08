@@ -69,7 +69,7 @@ inert.
      @keydown.window="shortcut($event)">
 
   <form id="inbox-filters" x-ref="filters"
-        class="bb-filters-scroll flex items-center gap-2 overflow-x-auto pb-3"
+        class="ib-filters"
         hx-get="{% url 'inbox:rows' workspace_id=request.workspace.id %}"
         hx-target="#inbox-list"
         hx-swap="innerHTML"
@@ -93,6 +93,7 @@ inert.
     {% for view in views %}
     <button type="button" class="chip-filter flex-shrink-0"
             :class="(state === '{{ view.state|escapejs }}' && assignee === '{{ view.assignee|escapejs }}') && 'active'"
+            :aria-pressed="(state === '{{ view.state|escapejs }}' && assignee === '{{ view.assignee|escapejs }}') ? 'true' : 'false'"
             @click="state = '{{ view.state|escapejs }}'; assignee = '{{ view.assignee|escapejs }}'; reload()">
       {{ view.label }}{% if view.count %}<span style="opacity: .65;">{{ view.count }}</span>{% endif %}
     </button>

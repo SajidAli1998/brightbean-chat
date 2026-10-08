@@ -9,7 +9,7 @@ import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Toolbar } from "./Toolbar";
-import { makeDetail, makeSampleGraph } from "./test/fixtures";
+import { makeDetail, makeSampleGraph, makeTriggers } from "./test/fixtures";
 import { installCsrfToken, stubHttp, type HttpStub } from "./test/http";
 import { makeStore, renderWith } from "./test/render";
 
@@ -18,6 +18,7 @@ let http: HttpStub;
 const published = {
   flow: { id: "flow-1", name: "Welcome", status: "active", folder: "", updated_at: "" },
   version: { id: "v", version: 2, published: true, updated_at: "" },
+  triggers: makeTriggers(1),
   validation: { errors: [], warnings: [] },
 };
 
@@ -132,13 +133,13 @@ describe("Publish and a flush that did not land", () => {
     await waitFor(() => expect(store.getState().save.publishedVersion?.version).toBe(2), SETTLE);
   });
 
-  it("says Live without a reload as soon as the publish lands", async () => {
+  it("says Published without a reload as soon as the publish lands", async () => {
     http.route("/publish/", { body: published });
 
     renderWith(makeStore(makeDetail(makeSampleGraph())), <Toolbar autosave={null} />);
     fireEvent.click(screen.getByRole("button", { name: "Set live" }));
 
-    await waitFor(() => expect(screen.getByText("Live · v2")).toBeTruthy(), SETTLE);
+    await waitFor(() => expect(screen.getByText("Published")).toBeTruthy(), SETTLE);
   });
 
   it("stops saying Archived once the publish that un-archived it lands", async () => {
@@ -157,11 +158,11 @@ describe("Publish and a flush that did not land", () => {
     fireEvent.click(screen.getByRole("button", { name: "Set live" }));
 
     await waitFor(() => expect(screen.queryByText("Archived")).toBeNull(), SETTLE);
-    expect(screen.getByText("Live · v2")).toBeTruthy();
+    expect(screen.getByText("Published")).toBeTruthy();
     expect(store.getState().flow?.status).toBe("active");
   });
 
-  it("says Live on load when the latest version is already published", () => {
+  it("says Published on load when the latest version is already published", () => {
     /**
      * The reload case, and the one that made this worth fixing: it reaches the
      * toolbar through load(), never through the publish handler, so a test that
@@ -176,7 +177,7 @@ describe("Publish and a flush that did not land", () => {
 
     renderWith(makeStore(detail), <Toolbar autosave={null} />);
 
-    expect(screen.getByText("Live · v2")).toBeTruthy();
+    expect(screen.getByText("Published · No triggers")).toBeTruthy();
     expect(screen.queryByText(/Draft v2/)).toBeNull();
   });
 
@@ -189,6 +190,25 @@ describe("Publish and a flush that did not land", () => {
 
     renderWith(makeStore(detail), <Toolbar autosave={null} />);
 
+    expect(screen.getByRole("button", { name: "Set live" }).hasAttribute("disabled")).toBe(true);
+  });
+
+  it("offers to turn on an entirely paused published flow and updates its status", async () => {
+    const detail = makeDetail(makeSampleGraph(), {
+      flow: { id: "flow-1", name: "Welcome", status: "active", folder: "", updated_at: "" },
+      version: { id: "v2", version: 2, published: true, updated_at: "" },
+      published_version: { id: "v2", version: 2, published: true, updated_at: "" },
+      triggers: makeTriggers(2, { enabled: false }),
+    });
+    const store = makeStore(detail);
+    http.route("/publish/", { body: { ...published, triggers: makeTriggers(2) } });
+
+    renderWith(store, <Toolbar autosave={null} />);
+    expect(screen.getByText("Published · Triggers off")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Turn on triggers" }));
+
+    await waitFor(() => expect(screen.getByText("Published")).toBeTruthy(), SETTLE);
+    expect(store.getState().triggers.every((trigger) => trigger.enabled)).toBe(true);
     expect(screen.getByRole("button", { name: "Set live" }).hasAttribute("disabled")).toBe(true);
   });
 

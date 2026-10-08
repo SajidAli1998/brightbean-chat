@@ -31,7 +31,7 @@ nothing is marked safe, and no value from a contact reaches an href or a src.
       supplies its own surfaces.
     {% endcomment %}
     <div class="card overflow-x-auto">
-    <table>
+    <table class="crm-contact-table">
       <thead>
         <tr>
           <th class="w-8">
@@ -83,13 +83,13 @@ nothing is marked safe, and no value from a contact reaches an href or a src.
                   {% include "partials/_platform_icon.html" with platform=platform size="sm" %}
                 </span>
               {% empty %}
-                <span class="muted">—</span>
+                <span class="muted">None</span>
               {% endfor %}
             </td>
             <td>
-              {% for tag in contact.tags.all %}<span class="crm-chip">{{ tag.name }}</span>{% empty %}<span class="muted">—</span>{% endfor %}
+              {% for tag in contact.tags.all %}<span class="crm-chip">{{ tag.name }}</span>{% empty %}<span class="muted">None</span>{% endfor %}
             </td>
-            <td>{% if contact.last_interaction_at %}{{ contact.last_interaction_at|timesince }} ago{% else %}<span class="muted">—</span>{% endif %}</td>
+            <td>{% if contact.last_interaction_at %}{{ contact.last_interaction_at|timesince }} ago{% else %}<span class="muted">Never</span>{% endif %}</td>
             <td>
               {% comment %}
                 "Contactable", in words. The column used to be headed "Opt-in"

@@ -4,8 +4,8 @@
  * There was no test file here at all, which is how `no_entry_node` came to be
  * printed in monospace under an otherwise good sentence for a whole release.
  */
-import { screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 
 import { ProblemsRail } from "./ProblemsRail";
 import { makeDetail, makeSampleGraph } from "../test/fixtures";
@@ -57,5 +57,20 @@ describe("ProblemsRail", () => {
     renderWith(store, <ProblemsRail />);
 
     expect(screen.getByText("Something a later layer checks.")).toBeTruthy();
+  });
+
+  it("opens trigger settings from the all-off warning", () => {
+    const store = makeStore(makeDetail(makeSampleGraph(), {
+      validation: { errors: [], warnings: [{ code: "flow_triggers_all_disabled", message: "Every trigger is off." }] },
+    }));
+    const opened = vi.fn();
+    window.addEventListener("toggle-triggers", opened);
+    try {
+      renderWith(store, <ProblemsRail />);
+      fireEvent.click(screen.getByRole("button", { name: /Open trigger settings/ }));
+      expect(opened).toHaveBeenCalledOnce();
+    } finally {
+      window.removeEventListener("toggle-triggers", opened);
+    }
   });
 });

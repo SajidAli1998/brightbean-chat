@@ -34,15 +34,20 @@ export function ProblemsRail() {
           type="button"
           className={`fb-problem fb-problem-${issue.severity}`}
           data-code={issue.code}
-          onClick={() =>
-            issue.node_id
-              ? store.getState().setSelection({ nodes: [issue.node_id], edges: [] })
-              : issue.edge_id
-                ? store.getState().setSelection({ nodes: [], edges: [issue.edge_id] })
-                : undefined
-          }
+          onClick={() => {
+            if (issue.code === "flow_has_no_trigger" || issue.code === "flow_triggers_all_disabled") {
+              window.dispatchEvent(new CustomEvent("toggle-triggers"));
+            } else if (issue.node_id) {
+              store.getState().setSelection({ nodes: [issue.node_id], edges: [] });
+            } else if (issue.edge_id) {
+              store.getState().setSelection({ nodes: [], edges: [issue.edge_id] });
+            }
+          }}
         >
           {issue.message}
+          {issue.code === "flow_has_no_trigger" || issue.code === "flow_triggers_all_disabled" ? (
+            <span className="fb-problem-action">Open trigger settings →</span>
+          ) : null}
           {/* The code is on the element, not in the sentence. It is how a
               support conversation identifies a finding, and `code` is also
               what the rail deduplicates on — but printing

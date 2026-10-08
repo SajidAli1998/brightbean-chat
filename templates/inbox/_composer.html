@@ -29,7 +29,10 @@ could flip by hand.
       refetches this partial, which mints a new one.
     {% endcomment %}
     <input type="hidden" name="token" value="{{ compose_token }}">
-    <label class="sr-only" for="reply-{{ conversation.id }}">Reply</label>
+    <div class="ib-compose-head">
+      <label class="ib-compose-label" for="reply-{{ conversation.id }}">Reply</label>
+      <span class="ib-compose-hint">Sending a reply pauses automation for {{ pause_minutes }} minutes.</span>
+    </div>
     {% comment %}
       No `required`. It was right when text was the only thing a message could
       carry; with the attachment button beside it a picture on its own is a
@@ -37,7 +40,7 @@ could flip by hand.
       The server is the authority either way — _outbound_body raises
       _ComposeError for a message with no blocks at all, and the toast says so.
     {% endcomment %}
-    <textarea id="reply-{{ conversation.id }}" name="body" rows="2"
+    <textarea id="reply-{{ conversation.id }}" name="body" rows="3"
               maxlength="{{ max_chars }}"
               data-shortcut="reply"
               class="form-input-styled"
@@ -98,19 +101,20 @@ could flip by hand.
         Nothing in the library this channel can carry.
       </p>
     </div>
-    <div class="flex items-center gap-2 mt-2">
-      <button type="submit" class="btn-brand btn-inline">Send</button>
+    <div class="ib-compose-actions">
+      <button type="submit" class="btn-brand btn-inline ib-action-btn ib-send-btn">Send</button>
+      <div class="ib-compose-tools">
       {% comment %}
         hx-post on the button overrides the form's, so "Add note" submits the
         same fields to the note endpoint. Same token: whichever one the agent
         presses, pressing it twice is still one message.
       {% endcomment %}
-      <button type="submit" class="btn-outline btn-inline"
+      <button type="submit" class="btn-outline btn-inline ib-action-btn"
               hx-post="{% url 'inbox:note' workspace_id=request.workspace.id conversation_id=conversation.id %}"
               hx-include="closest form"
               hx-swap="none">Add note</button>
       {% if media_kinds %}
-        <button type="button" class="btn-outline btn-inline"
+        <button type="button" class="btn-outline btn-inline ib-action-btn"
                 @click="togglePicker()"
                 :aria-expanded="picker.open ? 'true' : 'false'">Attach</button>
       {% endif %}
@@ -119,20 +123,22 @@ could flip by hand.
         — the shape "Add note" already uses beside it — so the scheduled body is
         built by exactly the code that builds a live one.
       {% endcomment %}
-      <button type="button" class="btn-outline btn-inline" @click="scheduling = !scheduling"
+      <button type="button" class="btn-outline btn-inline ib-action-btn" @click="scheduling = !scheduling"
               :aria-expanded="scheduling ? 'true' : 'false'"
               aria-controls="inbox-schedule-{{ conversation.id }}">Send later</button>
-      <span class="ml-auto text-xs" style="color: var(--text-ghost);">A reply pauses automation for {{ pause_minutes }} minutes.</span>
+      </div>
     </div>
 
     <div id="inbox-schedule-{{ conversation.id }}" class="ib-schedule" x-show="scheduling" x-cloak>
       <label for="send-at-{{ conversation.id }}">Send at</label>
-      <input id="send-at-{{ conversation.id }}" class="form-datetime" type="datetime-local" name="send_at">
-      <button type="submit" class="btn-outline btn-inline"
-              hx-post="{% url 'inbox:create_scheduled_reply' workspace_id=request.workspace.id conversation_id=conversation.id %}"
-              hx-include="closest form"
-              hx-disabled-elt="this"
-              hx-swap="none">Schedule</button>
+      <div class="ib-schedule-controls">
+        <input id="send-at-{{ conversation.id }}" class="form-datetime" type="datetime-local" name="send_at">
+        <button type="submit" class="btn-outline btn-inline ib-action-btn"
+                hx-post="{% url 'inbox:create_scheduled_reply' workspace_id=request.workspace.id conversation_id=conversation.id %}"
+                hx-include="closest form"
+                hx-disabled-elt="this"
+                hx-swap="none">Schedule reply</button>
+      </div>
     </div>
   </form>
 
@@ -141,28 +147,43 @@ could flip by hand.
     carries no message body, and hx-include="closest form" would post the
     half-written reply with it.
   {% endcomment %}
-  <form class="ib-remind"
+  <form class="ib-remind" x-data="{ open: false }"
         hx-post="{% url 'inbox:create_reminder' workspace_id=request.workspace.id conversation_id=conversation.id %}"
         hx-swap="none">
     {% csrf_token %}
-    <label class="sr-only" for="remind-at-{{ conversation.id }}">Remind at</label>
-    <input id="remind-at-{{ conversation.id }}" class="form-datetime" type="datetime-local" name="remind_at">
-    <label class="sr-only" for="remind-who-{{ conversation.id }}">Remind</label>
-    <select id="remind-who-{{ conversation.id }}" class="bb-select" name="recipient">
-      <option value="">Me</option>
-      {% for membership in members %}
-        <option value="{{ membership.user_id }}">{{ membership.user.display_name }}</option>
-      {% endfor %}
-    </select>
-    <label class="sr-only" for="remind-note-{{ conversation.id }}">Note</label>
-    <input id="remind-note-{{ conversation.id }}" type="text" name="note" maxlength="500" placeholder="Chase the refund">
-    {% comment %}
-      hx-disabled-elt is the whole double-submit guard here, unlike the Schedule
-      button beside it: this endpoint does not refetch the compose box, so its
-      token would not rotate and a token guard would read a deliberate second
-      reminder as a duplicate.
-    {% endcomment %}
-    <button type="submit" class="btn-outline btn-inline" hx-disabled-elt="this">Remind</button>
+    <button type="button" class="ib-remind-toggle" @click="open = !open"
+            :aria-expanded="open ? 'true' : 'false'" aria-controls="inbox-reminder-{{ conversation.id }}">
+      <span>Set a reminder</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <div id="inbox-reminder-{{ conversation.id }}" class="ib-remind-fields" x-show="open" x-cloak>
+      <div class="ib-remind-grid">
+        <div class="ib-remind-field">
+          <label for="remind-at-{{ conversation.id }}">When</label>
+          <input id="remind-at-{{ conversation.id }}" class="form-datetime" type="datetime-local" name="remind_at">
+        </div>
+        <div class="ib-remind-field">
+          <label for="remind-who-{{ conversation.id }}">For</label>
+          <select id="remind-who-{{ conversation.id }}" class="bb-select" name="recipient">
+            <option value="">Me</option>
+            {% for membership in members %}
+              <option value="{{ membership.user_id }}">{{ membership.user.display_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="ib-remind-foot">
+        <div class="ib-remind-field">
+          <label for="remind-note-{{ conversation.id }}">Note <span>(optional)</span></label>
+          <input id="remind-note-{{ conversation.id }}" class="form-input-styled" type="text" name="note" maxlength="500" placeholder="What should you follow up on?">
+        </div>
+        {% comment %}
+          This endpoint does not refetch the composer, so it needs its own
+          double-submit guard rather than the reply's rotating token.
+        {% endcomment %}
+        <button type="submit" class="btn-outline btn-inline ib-action-btn" hx-disabled-elt="this">Set reminder</button>
+      </div>
+    </div>
   </form>
 {% else %}
   <div class="ib-composer text-xs" style="color: var(--text-tertiary);">

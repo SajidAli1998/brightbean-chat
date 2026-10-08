@@ -5,7 +5,7 @@
  * constructed — see src/env.ts.
  */
 import type { BuilderEnv } from "../env";
-import type { FlowDetail, FlowGraph, PickerPayload, SaveResult, StatsPayload } from "../schema/types";
+import type { FlowDetail, FlowGraph, PickerPayload, PublishResult, SaveResult, StatsPayload } from "../schema/types";
 import { request } from "./client";
 
 export function loadFlow(env: BuilderEnv): Promise<FlowDetail> {
@@ -22,8 +22,8 @@ export function saveGraph(env: BuilderEnv, graph: FlowGraph): Promise<SaveResult
   return request<SaveResult>(env.detailUrl, { method: "PUT", body: { graph } });
 }
 
-export function publishFlow(env: BuilderEnv): Promise<SaveResult> {
-  return request<SaveResult>(env.publishUrl, { method: "POST" });
+export function publishFlow(env: BuilderEnv): Promise<PublishResult> {
+  return request<PublishResult>(env.publishUrl, { method: "POST" });
 }
 
 export function fetchStats(env: BuilderEnv): Promise<StatsPayload> {

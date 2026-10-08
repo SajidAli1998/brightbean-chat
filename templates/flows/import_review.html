@@ -24,8 +24,7 @@ from visiting a stranger's address.
           A shipped template is named the way its tile named it, not by its
           slug — see _source_label in apps/flows/views_portability.py.
         {% endcomment %}
-        {{ source_label }} Nothing has been created yet. Answer what it asks for below,
-        then import.
+        {{ source_label }} Check what will be added.
     </p>
 </div>
 {% endblock %}
@@ -60,9 +59,7 @@ from visiting a stranger's address.
           first template asked, reasonably, how they were supposed to test it.
         {% endcomment %}
         <p class="text-xs mt-3" style="color: var(--text-tertiary);">
-            Nothing goes live on its own. Each arrives as a draft with its trigger switched
-            off, so after importing you open it, check the messages read the way you want,
-            switch the trigger on and set the flow live.
+            Flows arrive as drafts with triggers off. Review each one before setting it live.
         </p>
     </section>
 
@@ -70,9 +67,9 @@ from visiting a stranger's address.
     {% if plan.outbound_requests %}
     <section class="rounded-xl border p-4 mb-4"
              style="border-color: var(--warning-500); background: rgba(var(--warning-500-rgb), 0.08);">
-        <h2 class="text-sm font-semibold mb-1" style="color: var(--text-primary);">This flow calls out to the internet</h2>
+        <h2 class="text-sm font-semibold mb-1" style="color: var(--text-primary);">External requests</h2>
         <p class="text-xs mb-2" style="color: var(--text-secondary);">
-            Whoever wrote this template chose these addresses. Read them before you publish the flow.
+            Check these addresses before publishing.
         </p>
         <ul class="space-y-1">
             {% for call in plan.outbound_requests %}
@@ -125,8 +122,7 @@ from visiting a stranger's address.
         <section class="rounded-xl border p-4 mb-4" style="border-color: var(--border); background: var(--surface-1);">
             <h2 class="text-sm font-semibold" style="color: var(--text-primary);">Triggers</h2>
             <p class="text-xs mt-0.5 mb-3" style="color: var(--text-tertiary);">
-                What starts each flow. Keeping one imports it switched off, ready for you to turn
-                on once you have read the flow. Skipping one leaves it out of the import entirely.
+                Keep a trigger off for now, or skip it entirely.
             </p>
             <div class="space-y-3">
                 {% for choice in plan.triggers %}
@@ -169,7 +165,7 @@ from visiting a stranger's address.
             <button type="submit" name="then" value="import" class="btn-pill-primary">
                 Import {{ plan.document.flows|length }} flow{{ plan.document.flows|length|pluralize }}
             </button>
-            <button type="submit" class="btn-pill-secondary">Save and come back later</button>
+            <button type="submit" class="btn-pill-secondary">Save for later</button>
             <button type="button" class="btn-pill-secondary btn-danger-soft"
                     hx-post="{{ discard_url }}" hx-swap="none"
                     hx-on::after-request="if (JSON.parse(event.detail.xhr.getResponseHeader('HX-Trigger') || '{}').flowImportDiscarded) window.location = '{{ list_url|escapejs }}';">Discard</button>
@@ -182,9 +178,9 @@ from visiting a stranger's address.
         {% endcomment %}
         {% if not plan.can_apply %}
         <p class="import-todo">
-            Importing now will bring you back here. Still to answer:
+            Still needed:
             {% for item in unanswered %}<a href="#{{ item.anchor }}">{{ item.label }}: {{ item.name }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}.
-            Save your answers to re-check.
+            Save to check again.
         </p>
         {% endif %}
     </form>

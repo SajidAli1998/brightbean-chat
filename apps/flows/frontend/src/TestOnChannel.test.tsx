@@ -113,7 +113,7 @@ describe("the preview button", () => {
         platform: "instagram",
         platform_label: "Instagram",
         account: "@acme",
-        instructions: "Send any message once the chat opens — that first message is what starts the test.",
+        instructions: "Send a message after the chat opens to start the test.",
         expires_in: 900,
       },
     });
@@ -124,7 +124,7 @@ describe("the preview button", () => {
     expect(await screen.findByRole("link", { name: /Open @acme on Instagram/ }, SETTLE)).toBeInTheDocument();
     // Meta opens a composer rather than sending anything, so the tester has to
     // be told. Without this, a working link gets reported as broken.
-    expect(screen.getByText(/Send any message once the chat opens/)).toBeInTheDocument();
+    expect(screen.getByText(/Send a message after the chat opens/)).toBeInTheDocument();
   });
 
   it("explains a channel that has no live test, without offering somewhere to go", async () => {

@@ -100,7 +100,7 @@ running", and a page of zeroes answers neither.
                       webhook) legitimately sits at 0% — the column says
                       "delivered", not "arrived".
                     {% endcomment %}
-                    <td class="an-num">{% if row.delivery_rate is not None %}{{ row.delivery_rate }}%{% else %}<span class="an-muted">—</span>{% endif %}</td>
+                    <td class="an-num">{% if row.delivery_rate is not None %}{{ row.delivery_rate }}%{% else %}<span class="an-muted">N/A</span>{% endif %}</td>
                 </tr>
                 {% endfor %}
             </tbody>

@@ -262,7 +262,7 @@ def _complete(request: Any, workspace: Any, code: str) -> str:
     messages.success(
         request,
         f"Connected {connection.display_name}. Subscribe your Meta app to this account's "
-        f"webhook fields to start receiving messages — see docs/channels/instagram.md.",
+        f"webhook fields to start receiving messages. See docs/channels/instagram.md.",
     )
     return ""
 

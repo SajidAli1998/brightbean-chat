@@ -213,6 +213,7 @@ def flow_publish(request: WorkspaceRequest, workspace_id: str, flow_id: str) -> 
         {
             "flow": _flow_payload(flow),
             "version": published.version.as_dict(),
+            "triggers": trigger_services.summaries(flow),
             "validation": published.validation.as_dict(),
         }
     )

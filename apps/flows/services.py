@@ -22,9 +22,10 @@ from dataclasses import dataclass, replace
 from typing import Any
 
 from django.db import transaction
+from django.utils import timezone
 
 from apps.flows.capabilities import connected_platforms
-from apps.flows.models import Flow, FlowStatus, FlowVersion
+from apps.flows.models import Flow, FlowStatus, FlowVersion, Trigger
 from apps.flows.schema import ValidationResult, empty_graph, validate_graph
 from apps.flows.schema.sanitize import sanitize_graph
 
@@ -298,6 +299,19 @@ def publish(flow: Flow, *, user: Any = None) -> PublishResult:
     if locked.status != FlowStatus.ACTIVE:
         locked.status = FlowStatus.ACTIVE
         locked.save(update_fields=["status", "updated_at"])
+
+    # Publishing an entirely paused flow now starts its configured triggers.
+    # A mixed set is deliberate: keep the individually paused triggers paused.
+    # Hold the trigger rows until commit so a concurrent publish cannot make a
+    # second decision from the same all-off snapshot.
+    triggers = list(Trigger.objects.for_workspace(flow.workspace_id).filter(flow=locked).select_for_update())
+    if triggers and not any(trigger.enabled for trigger in triggers):
+        Trigger.objects.for_workspace(flow.workspace_id).filter(pk__in=[trigger.pk for trigger in triggers]).update(
+            enabled=True, updated_at=timezone.now()
+        )
+        # Readiness and capability warnings depend on enabled triggers. Return
+        # the verdict for the committed state, not the earlier all-off state.
+        result = validate_for_workspace(target.graph_json, locked.workspace, flow=locked)
 
     # The caller holds the unlocked instance; keep it honest rather than making
     # every call site remember to refresh.

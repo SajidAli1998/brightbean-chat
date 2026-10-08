@@ -222,7 +222,7 @@ def _no_connection(workspace_id: str, testable: list[str], problem: str) -> dict
     return {
         "ok": False,
         "reason": "no_connection",
-        "message": f"Connect {named} first — testing runs the draft in a real chat with it.",
+        "message": f"Connect {named} first. Testing runs the draft in a real chat with it.",
         "settings_url": _connect_url(workspace_id, platform),
     }
 

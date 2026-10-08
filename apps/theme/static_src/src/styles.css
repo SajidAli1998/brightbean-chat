@@ -214,8 +214,8 @@
      references a Layer-1 token so editing only the top block still recolours
      the canvas. A group added later needs one pair here and one modifier
      class below. */
-  --flow-group-content: var(--brand-500);
-  --flow-group-content-soft: var(--primary-soft);
+  --flow-group-content: var(--accent-sky);
+  --flow-group-content-soft: var(--accent-sky-soft);
   --flow-group-logic:   var(--accent-indigo);
   --flow-group-logic-soft: var(--accent-indigo-soft);
   --flow-group-actions: var(--accent-teal);
@@ -2282,6 +2282,8 @@ span.flatpickr-weekday {
 .bb-filter-select.has-icon {
   padding-left: 28px;
 }
+/* ui_select renders its own chevron; the background arrow is for native selects. */
+.bb-filter-trigger { background-image: none; padding-right: 10px; }
 .bb-filter-select:hover {
   border-color: var(--border-hover);
 }
@@ -2798,11 +2800,11 @@ span.flatpickr-weekday {
   --xy-background-color: var(--surface-page);
   --xy-background-pattern-color: var(--neutral-300);
   --xy-edge-stroke: var(--border-hover);
-  --xy-edge-stroke-selected: var(--primary);
+  --xy-edge-stroke-selected: var(--accent-sky);
   --xy-edge-stroke-width: 1.5;
   --xy-edge-label-background-color: var(--surface-0);
   --xy-edge-label-color: var(--text-secondary);
-  --xy-connectionline-stroke: var(--primary);
+  --xy-connectionline-stroke: var(--accent-sky);
   --xy-handle-background-color: var(--surface-0);
   --xy-handle-border-color: var(--border-hover);
   --xy-node-background-color: var(--surface-0);
@@ -2810,7 +2812,7 @@ span.flatpickr-weekday {
   --xy-node-border: 1px solid var(--border);
   --xy-node-border-radius: var(--radius-lg);
   --xy-node-boxshadow-hover: var(--shadow-md);
-  --xy-node-boxshadow-selected: 0 0 0 2px var(--primary-ring), var(--shadow-md);
+  --xy-node-boxshadow-selected: 0 0 0 2px var(--accent-sky), var(--shadow-md);
   --xy-controls-button-background-color: var(--surface-0);
   --xy-controls-button-background-color-hover: var(--surface-2);
   --xy-controls-button-border-color: var(--border);
@@ -2820,8 +2822,8 @@ span.flatpickr-weekday {
   --xy-minimap-background-color: var(--surface-0);
   --xy-minimap-mask-background-color: rgba(var(--scrim-rgb), 0.06);
   --xy-minimap-node-background-color: var(--border-hover);
-  --xy-selection-background-color: rgba(var(--brand-500-rgb), 0.06);
-  --xy-selection-border: 1px dashed var(--primary);
+  --xy-selection-background-color: var(--accent-sky-soft);
+  --xy-selection-border: 1px dashed var(--accent-sky);
   --xy-attribution-background-color: transparent;
 
   /* The group accent every .fb-node reads. Overridden per group below;
@@ -2841,12 +2843,67 @@ span.flatpickr-weekday {
 .fb-toolbar {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.625rem;
   padding: 0.625rem 1rem;
   border-bottom: 1px solid var(--border);
   background: var(--surface-0);
   font-size: var(--fs-body);
 }
+
+.fb-flow-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.625rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  color: var(--text-primary);
+  font-size: var(--fs-body);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.fb-flow-status-success { background: var(--success-50); border-color: var(--success-50); }
+.fb-flow-status-warning { background: var(--surface-2); }
+.fb-flow-status-dot { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--neutral-400); }
+.fb-flow-status-success .fb-flow-status-dot { background: var(--success-500); }
+.fb-toolbar-divider { width: 1px; height: 1.25rem; background: var(--border-strong); }
+.fb-toolbar-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.fb-toolbar-icon svg, .bb-split svg { width: 1rem; height: 1rem; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.fb-toolbar-icon:hover:not(:disabled), .fb-toolbar-icon[aria-pressed="true"] { background: var(--surface-2); color: var(--text-primary); }
+.fb-toolbar-icon:disabled { opacity: 0.35; cursor: not-allowed; }
+.fb-toolbar-icon:focus-visible, .bb-split :focus-visible { outline: 2px solid var(--accent-sky); outline-offset: 2px; }
+.fb-toolbar .btn-link { padding: 0.35rem 0.5rem; color: var(--text-secondary); }
+.fb-toolbar .btn-link:hover { background: var(--surface-2); color: var(--text-primary); }
+.fb-toolbar .fb-badge-warning { background: var(--surface-2); color: var(--text-secondary); }
+.fb-toolbar-meta { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-left: auto; color: var(--text-tertiary); font-size: var(--fs-sm); }
+
+/* The closed split download control occupies only two icon widths. */
+.bb-split { position: relative; display: inline-flex; align-items: stretch; height: 2rem; border: 1px solid var(--border-strong); border-radius: var(--radius-md); background: var(--surface-0); color: var(--text-secondary); }
+.bb-split-main, .bb-split-toggle { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 100%; padding: 0; border: 0; background: transparent; color: inherit; cursor: pointer; }
+.bb-split-main { border-right: 1px solid var(--border); }
+.bb-split-toggle { width: 1.65rem; }
+.bb-split-main:hover, .bb-split-toggle:hover { background: var(--surface-2); color: var(--text-primary); }
+.bb-split-menu { position: absolute; top: calc(100% + 0.25rem); right: 0; z-index: 50; width: 14rem; padding: 0.25rem; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-0); box-shadow: var(--shadow-lg); }
+.bb-split-menu button { display: block; width: 100%; padding: 0.5rem 0.625rem; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text-primary); font-size: var(--fs-sm); text-align: left; cursor: pointer; }
+.bb-split-menu button:hover, .bb-split-menu button[aria-current="true"] { background: var(--surface-2); }
+.bb-icon-action { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 2rem; height: 2rem; border: 1px solid var(--border-strong); border-radius: var(--radius-md); background: var(--surface-0); color: var(--text-secondary); text-decoration: none; cursor: pointer; }
+.bb-icon-action:hover { background: var(--surface-2); color: var(--text-primary); }
+.bb-icon-action:focus-visible { outline: 2px solid var(--accent-sky); outline-offset: 2px; }
+.bb-icon-action svg { width: 1rem; height: 1rem; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
 /* ── Import review: one question per card ────────────────────── */
 
@@ -2895,22 +2952,22 @@ span.flatpickr-weekday {
 }
 .import-todo a { font-weight: 600; text-decoration: underline; }
 
-/* ── Left column: the step editor ────────────────────────────── */
+/* ── Trigger summary and right-hand step editor ────────────── */
 
-/* Replaces .fb-palette and .fb-inspector, which were one job split either side
-   of the canvas: you picked a node type on the left, it landed in the middle,
-   and you configured it on the right. Steps are added from the canvas now, so
-   this is the single place a step is read and edited. */
+/* Step settings share the right sidebar with the preview. The trigger summary
+   keeps its own narrow left pane so the flow's entry condition remains visible. */
 .fb-editor {
-  width: 21.75rem;
-  flex: 0 0 auto;
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-right: 1px solid var(--border);
   background: var(--surface-0);
 }
 .fb-editor-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 1rem; }
+.fb-trigger-sidebar { width: 18rem; flex: 0 0 auto; overflow-y: auto; padding: 1rem; border-right: 1px solid var(--border); background: var(--surface-0); }
+.fb-right-sidebar { width: 22rem; flex: 0 0 auto; display: flex; flex-direction: column; min-height: 0; overflow: hidden; border-left: 1px solid var(--border); background: var(--surface-0); }
+.fb-steplist { max-height: min(22rem, 42vh); overflow-y: auto; }
 
 .fb-editor-section { margin-top: 1.25rem; }
 .fb-editor-section:first-child { margin-top: 0; }
@@ -2943,6 +3000,7 @@ span.flatpickr-weekday {
   border-radius: var(--radius-tile);
   background: var(--surface-1);
 }
+.fb-trigger-heading { margin-bottom: 0.5rem; font-size: var(--fs-body); font-weight: 700; color: var(--text-primary); }
 .fb-trigger-empty { margin-top: 0.25rem; font-size: var(--fs-sm); line-height: 1.5; color: var(--text-tertiary); }
 .fb-trigger-list { margin-top: 0.5rem; }
 .fb-trigger-row { margin-bottom: 0.5rem; }
@@ -2953,7 +3011,7 @@ span.flatpickr-weekday {
   margin-left: 0.375rem;
   font-size: var(--fs-2xs);
   font-weight: 600;
-  color: var(--warning-700);
+  color: var(--text-secondary);
 }
 .fb-trigger-detail { font-size: var(--fs-sm); line-height: 1.45; color: var(--text-tertiary); }
 
@@ -2973,8 +3031,8 @@ span.flatpickr-weekday {
   cursor: pointer;
 }
 .fb-steplist-item:hover { background: var(--surface-2); }
-.fb-steplist-item.is-selected { background: var(--primary-tint); border-color: var(--border); }
-.fb-steplist-item:focus-visible { outline: 2px solid var(--primary-ring); outline-offset: 1px; }
+.fb-steplist-item.is-selected { background: var(--surface-2); border-color: var(--border-strong); }
+.fb-steplist-item:focus-visible { outline: 2px solid var(--accent-sky); outline-offset: 1px; }
 .fb-steplist-title { font-size: var(--fs-body); font-weight: 600; color: var(--text-primary); }
 
 /* The numbered circle the design puts beside every step. */
@@ -2986,8 +3044,8 @@ span.flatpickr-weekday {
   height: 1.375rem;
   flex: 0 0 auto;
   border-radius: var(--radius-full);
-  background: var(--primary);
-  color: #fff;
+  background: var(--neutral-200);
+  color: var(--text-primary);
   font-size: var(--fs-2xs);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -2998,7 +3056,7 @@ span.flatpickr-weekday {
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--brand-700);
+  color: var(--text-secondary);
 }
 
 .fb-step-flag {
@@ -3105,7 +3163,7 @@ span.flatpickr-weekday {
   color: var(--warning-700);
 }
 
-/* The left column's matching panel, highlighted when the canvas card is. */
+/* The left trigger panel, highlighted when the canvas card is selected. */
 .fb-trigger-section.is-selected {
   border-color: var(--brand-green-500);
   background: var(--brand-green-50);
@@ -3125,13 +3183,13 @@ span.flatpickr-weekday {
   border: 1.5px dashed var(--border-strong);
   border-radius: var(--radius-tile);
   background: transparent;
-  color: var(--brand-700);
+  color: var(--text-secondary);
   font-size: var(--fs-body);
   font-weight: 600;
   cursor: pointer;
 }
-.fb-add-wide:hover { border-color: var(--primary); background: var(--primary-tint); }
-.fb-add-wide:focus-visible { outline: 2px solid var(--primary-ring); outline-offset: 1px; }
+.fb-add-wide:hover { border-color: var(--border-hover); background: var(--surface-2); }
+.fb-add-wide:focus-visible { outline: 2px solid var(--accent-sky); outline-offset: 1px; }
 
 /* The sections this step does not have yet, grouped by what they are for. */
 .fb-adders { margin-top: 1rem; }
@@ -3170,11 +3228,11 @@ span.flatpickr-weekday {
 }
 .fb-add-chip:hover {
   border-style: solid;
-  border-color: var(--primary);
-  background: var(--primary-tint);
-  color: var(--brand-700);
+  border-color: var(--border-hover);
+  background: var(--surface-2);
+  color: var(--text-primary);
 }
-.fb-add-chip:focus-visible { outline: 2px solid var(--primary-ring); outline-offset: 1px; }
+.fb-add-chip:focus-visible { outline: 2px solid var(--accent-sky); outline-offset: 1px; }
 
 /* One item's controls: a group of round buttons rather than three underlined
    words, which is also what keeps the row narrow enough for a 348px column. */
@@ -3196,7 +3254,7 @@ span.flatpickr-weekday {
   cursor: pointer;
 }
 .fb-row-btn:hover { background: var(--surface-2); color: var(--text-primary); }
-.fb-row-btn:focus-visible { outline: 2px solid var(--primary-ring); outline-offset: 1px; }
+.fb-row-btn:focus-visible { outline: 2px solid var(--accent-sky); outline-offset: 1px; }
 .fb-row-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .fb-row-btn.is-danger:hover:not(:disabled) {
   border-color: var(--error-500);
@@ -3277,7 +3335,7 @@ span.flatpickr-weekday {
   cursor: pointer;
 }
 .fb-addstep-item:hover { background: var(--surface-2); }
-.fb-addstep-item:focus-visible { outline: 2px solid var(--primary-ring); outline-offset: -2px; }
+.fb-addstep-item:focus-visible { outline: 2px solid var(--accent-sky); outline-offset: -2px; }
 .fb-addstep-hint { font-size: var(--fs-2xs); color: var(--text-tertiary); }
 
 .fb-addstep-swatch {
@@ -3291,11 +3349,11 @@ span.flatpickr-weekday {
 /* ── Preview ─────────────────────────────────────────────────── */
 
 .fb-preview {
-  width: 18.75rem;
   flex: 0 0 auto;
+  max-height: 40%;
   overflow-y: auto;
   padding: 1rem;
-  border-left: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
   background: var(--surface-0);
 }
 
@@ -3306,7 +3364,9 @@ span.flatpickr-weekday {
   background: var(--surface-sunken);
 }
 .fb-phone-screen {
-  min-height: 16rem;
+  min-height: 7rem;
+  max-height: 14rem;
+  overflow-y: auto;
   padding: 0.75rem;
   border-radius: 1.125rem;
   background: var(--surface-0);
@@ -3319,8 +3379,8 @@ span.flatpickr-weekday {
   max-width: 100%;
   padding: 0.5rem 0.75rem;
   border-radius: 1rem 1rem 1rem 0.25rem;
-  background: var(--primary);
-  color: #fff;
+  background: var(--neutral-100);
+  color: var(--text-primary);
   font-size: var(--fs-body);
   line-height: 1.45;
   white-space: pre-wrap;
@@ -3334,7 +3394,7 @@ span.flatpickr-weekday {
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-full);
   background: var(--surface-0);
-  color: var(--primary);
+  color: var(--text-secondary);
   font-size: var(--fs-sm);
   font-weight: 600;
   text-align: center;
@@ -3366,7 +3426,7 @@ span.flatpickr-weekday {
 }
 /* A ring, not a heavier border: the card's own outline stays put so selecting
    one does not shift its neighbours by a pixel. */
-.fb-node.is-selected { border-color: var(--primary); box-shadow: 0 0 0 1.5px var(--primary); }
+.fb-node.is-selected { border-color: var(--accent-sky); box-shadow: 0 0 0 1.5px var(--accent-sky); }
 .fb-node.is-invalid { border-color: var(--error-500); }
 
 /* Group accents. Sibling modifiers rather than utilities, because
@@ -3374,7 +3434,7 @@ span.flatpickr-weekday {
 /* --flow-accent is the dot; --flow-ink is the eyebrow's text, which needs a
    readable weight the dot colour does not have. The four pairs map onto the
    four phrases in schema/plain.ts: When, Then send, If they reply, Then do. */
-.fb-node-content { --flow-accent: var(--flow-group-content); --flow-accent-soft: var(--flow-group-content-soft); --flow-ink: var(--brand-700); }
+.fb-node-content { --flow-accent: var(--flow-group-content); --flow-accent-soft: var(--flow-group-content-soft); --flow-ink: var(--info-700); }
 .fb-node-logic   { --flow-accent: var(--flow-group-logic);   --flow-accent-soft: var(--flow-group-logic-soft);   --flow-ink: #3730A3; }
 .fb-node-actions { --flow-accent: var(--flow-group-actions); --flow-accent-soft: var(--flow-group-actions-soft); --flow-ink: #0F766E; }
 .fb-node-other   { --flow-accent: var(--flow-group-other);   --flow-accent-soft: var(--flow-group-other-soft);   --flow-ink: var(--text-tertiary); }
@@ -3435,7 +3495,7 @@ span.flatpickr-weekday {
   align-items: center;
   padding: 0.0625rem 0.3125rem;
   border-radius: var(--radius-full);
-  background: var(--primary);
+  background: var(--neutral-700);
   color: var(--text-inverse);
   font-size: 0.625rem;
   font-weight: 600;
@@ -3524,7 +3584,7 @@ span.flatpickr-weekday {
   text-align: left;
   white-space: normal;
 }
-.fb-rich-text:focus-visible { outline: 2px solid var(--primary-ring); outline-offset: 1px; }
+.fb-rich-text:focus-visible { outline: 2px solid var(--accent-sky); outline-offset: 1px; }
 /* An empty editor is otherwise a zero-height line the author cannot click into. */
 .fb-rich-text > :first-child { margin-top: 0; }
 .fb-rich-text img { max-width: 100%; height: auto; }
@@ -3541,7 +3601,7 @@ span.flatpickr-weekday {
   margin: 0.5rem 0;
   font-weight: 600;
 }
-.fb-rich-text a { color: var(--primary); text-decoration: underline; }
+.fb-rich-text a { color: var(--info-700); text-decoration: underline; }
 
 /* ── Problems rail ───────────────────────────────────────────── */
 
@@ -3572,6 +3632,23 @@ span.flatpickr-weekday {
 }
 .fb-problem-error   { border-left-color: var(--error-500); }
 .fb-problem-warning { border-left-color: var(--warning-500); }
+.fb-problem-action { display: block; margin-top: 0.25rem; color: var(--text-primary); font-weight: 600; }
+
+@media (min-width: 1200px) and (max-width: 1399px) {
+  .fb-trigger-sidebar { width: 15rem; }
+  .fb-right-sidebar { width: 21rem; }
+}
+
+@media (max-width: 1199px) {
+  .fb-shell { flex-direction: column; overflow-y: auto; }
+  .fb-trigger-sidebar, .fb-right-sidebar { width: 100%; flex: 0 0 auto; border-left: 0; border-right: 0; }
+  .fb-trigger-sidebar { border-bottom: 1px solid var(--border); }
+  .fb-canvas { flex: 0 0 28rem; min-height: 28rem; }
+  .fb-right-sidebar { overflow: visible; }
+  .fb-preview { max-height: none; }
+  .fb-editor { min-height: 18rem; }
+  .fb-editor-body { max-height: 36rem; }
+}
 .fb-problem-code { font-family: var(--brand-font-mono); font-size: 0.625rem; color: var(--text-ghost); }
 
 /* ── Media picker ────────────────────────────────────────────── */
@@ -3593,7 +3670,7 @@ span.flatpickr-weekday {
   cursor: pointer;
 }
 .fb-asset:hover { border-color: var(--border-hover); }
-.fb-asset.is-selected { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-ring); }
+.fb-asset.is-selected { border-color: var(--accent-sky); box-shadow: 0 0 0 2px var(--accent-sky-soft); }
 .fb-asset-thumb {
   aspect-ratio: 4 / 3;
   border-radius: var(--radius-sm);
@@ -3610,6 +3687,15 @@ span.flatpickr-weekday {
    rather than a colour utility beside .ib-bubble. Utilities stay
    correct for layout, spacing and flex, which nothing here touches.
    ═══════════════════════════════════════════════════════════════ */
+
+.ib-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  min-width: 0;
+}
 
 .ib-shell {
   display: flex;
@@ -3737,6 +3823,9 @@ span.flatpickr-weekday {
   flex: 1 1 11rem;
   min-width: 0;
 }
+.ib-thread-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-left: auto; }
+.ib-thread-actions .btn-outline { padding: 0.5rem 0.875rem; border-radius: var(--radius-sm); }
+.ib-thread-actions .bb-select { min-height: 2.375rem; }
 
 /* Bubbles. */
 .ib-bubble {
@@ -3883,19 +3972,54 @@ span.flatpickr-weekday {
 }
 
 .ib-schedule {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
+  padding: 0.75rem;
+  margin-top: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
 }
+.ib-schedule > label,
+.ib-remind-field > label {
+  display: block;
+  margin-bottom: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.ib-schedule-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.ib-schedule-controls .form-datetime { flex: 1 1 12rem; width: auto; min-width: 0; }
 
 .ib-remind {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0 0.75rem 0.75rem;
+  border-top: 1px solid var(--border);
+  background: var(--surface-1);
 }
+.ib-remind-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.ib-remind-toggle:hover { color: var(--text-primary); background: var(--surface-2); }
+.ib-remind-toggle:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+.ib-remind-toggle svg { width: 1rem; height: 1rem; transition: transform var(--dur-fast) ease; }
+.ib-remind-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
+.ib-remind-fields { padding: 0.25rem 0.75rem 0.75rem; }
+.ib-remind-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); gap: 0.75rem; }
+.ib-remind-field { min-width: 0; }
+.ib-remind-field > label span { font-weight: 400; color: var(--text-tertiary); }
+.ib-remind-field input,
+.ib-remind-field select { display: block; width: 100%; min-width: 0; max-width: none; height: 2.5rem; }
+.ib-remind-foot { display: flex; flex-wrap: wrap; align-items: end; gap: 0.75rem; margin-top: 0.75rem; }
+.ib-remind-foot .ib-remind-field { flex: 1 1 15rem; }
+.ib-remind-foot > button { flex: 0 0 auto; }
 
 .ib-row-wrap { display: flex; align-items: flex-start; gap: 0.25rem; }
 .ib-row-wrap > .ib-row { flex: 1 1 auto; min-width: 0; }
@@ -4000,15 +4124,24 @@ span.flatpickr-weekday {
 
 .ib-composer {
   border-top: 1px solid var(--border);
-  padding: 0.625rem 0.75rem;
+  padding: 0.75rem;
   background: var(--surface-0);
 }
+#inbox-composer { flex: 0 1 auto; max-height: min(48vh, 26rem); min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.ib-compose-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.25rem 0.75rem; margin-bottom: 0.5rem; }
+.ib-compose-label { font-size: 0.8125rem; font-weight: 700; color: var(--text-primary); }
+.ib-compose-hint { font-size: 0.6875rem; line-height: 1.35; color: var(--text-tertiary); }
 .ib-composer textarea {
   width: 100%;
-  min-height: 3.5rem;
+  max-width: none;
+  min-height: 5.25rem;
   resize: vertical;
   font-size: 0.8125rem;
 }
+.ib-compose-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-top: 0.625rem; }
+.ib-compose-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; min-width: 0; }
+.ib-action-btn { min-height: 2.25rem; padding: 0.4rem 0.625rem; border-radius: var(--radius-sm); font-size: 0.75rem; white-space: nowrap; }
+.ib-send-btn { min-width: 4.5rem; }
 
 /* The contact panel. Hidden below `lg` by the utility on the element;
    this only owns the look. */
@@ -4031,15 +4164,14 @@ span.flatpickr-weekday {
 }
 .ib-side-value { font-size: 0.8125rem; color: var(--text-primary); overflow-wrap: anywhere; }
 
-/* Single-pane below `lg`. The rail and the panel are both fixed-basis
-   flex items, so on a phone they would otherwise share 375px between
-   them and clip the thread off the side.
+/* Below 1280px, show either the list or the open conversation. Keeping both
+   alongside the contact panel leaves the message column too narrow to write.
 
    `:has()` rather than a class the server sets, because "is a thread
    open" is already expressed by the markup — a second signal saying
    the same thing is a second thing to keep in step. .ib-thread-header
    only exists inside a rendered conversation. */
-@media (max-width: 1023px) {
+@media (max-width: 1279px) {
   .ib-shell { flex-direction: column; }
   .ib-rail { flex: 1 1 auto; }
   .ib-shell > section:last-child { flex: 1 1 auto; }
@@ -4110,6 +4242,8 @@ span.flatpickr-weekday {
   margin-bottom: 0.75rem;
 }
 .crm-toolbar form { margin-bottom: 0; }
+.app-content .crm-contact-table { margin-bottom: 0; min-width: 44rem; }
+.app-content .crm-contact-table th { padding-top: 0.875rem; padding-bottom: 0.875rem; vertical-align: middle; }
 
 /* ── Filter builder ─────────────────────────────────────────── */
 
