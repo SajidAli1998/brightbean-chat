@@ -156,6 +156,41 @@ class TestTheSmtpConnectionIsPinned:
         with pytest.raises(OSError, match="Non-blocking"):
             pinned._get_socket("mail.example.com", 587, 0)
 
+    @pytest.mark.parametrize(("use_ssl", "base"), [(False, "SMTP"), (True, "SMTP_SSL")])
+    def test_the_real_backend_is_built_pinned(self, monkeypatch: pytest.MonkeyPatch, use_ssl: bool, base: str) -> None:
+        """Django 5.2 made ``connection_class`` a read-only property, and assigning
+        it on the instance raised AttributeError on every SMTP connect."""
+        monkeypatch.setattr(email_backends, "resolved_destination", lambda host, port: "203.0.113.9")
+        monkeypatch.setattr(
+            email_backends,
+            "_smtp_settings",
+            lambda connection: {
+                "host": "smtp.example.com",
+                "port": 465 if use_ssl else 587,
+                "username": "u",
+                "password": "p",
+                "use_tls": not use_ssl,
+                "use_ssl": use_ssl,
+            },
+        )
+
+        backend = email_backends.smtp_connection(object())
+
+        assert backend.connection_class.__name__ == f"Pinned{base}"
+        assert backend.connection_class.pinned_address == "203.0.113.9"
+
+    def test_an_unpinned_backend_is_djangos_own(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        import smtplib
+
+        monkeypatch.setattr(email_backends, "resolved_destination", lambda host, port: "")
+        monkeypatch.setattr(
+            email_backends,
+            "_smtp_settings",
+            lambda connection: {"host": "127.0.0.1", "port": 25, "use_tls": False, "use_ssl": False},
+        )
+
+        assert email_backends.smtp_connection(object()).connection_class is smtplib.SMTP
+
     def test_the_class_keeps_a_recognisable_name(self) -> None:
         """It appears in tracebacks; "PinnedSMTP" is worth more than "PinnedSMTP.<locals>"."""
         assert email_backends._pinned_smtp_class(_BareSMTP, "203.0.113.9").__name__ == "Pinned_BareSMTP"

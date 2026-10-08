@@ -319,7 +319,7 @@ def smtp_connection(connection: Any) -> Any:
     to point at a local dummy server or at ``locmem``. Nothing else in this
     module builds an SMTP connection.
     """
-    from django.core.mail import get_connection
+    from django.core.mail.backends.smtp import EmailBackend
 
     # `config`, not `settings`: this module imports django.conf.settings, and a
     # local of that name would shadow it for anything added below.
@@ -327,20 +327,25 @@ def smtp_connection(connection: Any) -> Any:
     if not config["host"]:
         raise APIError("This email connection has no SMTP host stored.")
     address = resolved_destination(config["host"], config["port"])
-    backend = get_connection(
-        backend="django.core.mail.backends.smtp.EmailBackend",
-        fail_silently=False,
-        timeout=SMTP_TIMEOUT,
-        **config,
-    )
-    if address:
-        # `connection_class` is set in SMTP EmailBackend.__init__ but is not on
-        # BaseEmailBackend, which is what get_connection is typed as returning.
-        backend.connection_class = _pinned_smtp_class(  # type: ignore[attr-defined]
-            backend.connection_class,  # type: ignore[attr-defined]
-            address,
-        )
-    return backend
+    backend_class = _pinned_backend_class(EmailBackend, address) if address else EmailBackend
+    return backend_class(fail_silently=False, timeout=SMTP_TIMEOUT, **config)
+
+
+def _pinned_backend_class(base: type, address: str) -> type:
+    """Django's SMTP backend whose ``connection_class`` connects to ``address``.
+
+    ``connection_class`` is a read-only property on Django 5.2's backend —
+    ``SMTP_SSL`` or ``SMTP`` by ``use_ssl`` — so it cannot be assigned on an
+    instance. Overriding the property in a subclass keeps that choice and wraps
+    whichever class it picks.
+    """
+
+    class PinnedEmailBackend(base):  # type: ignore[misc, valid-type]
+        @property
+        def connection_class(self) -> type:
+            return _pinned_smtp_class(super().connection_class, address)
+
+    return PinnedEmailBackend
 
 
 def _pinned_smtp_class(base: type, address: str) -> type:
